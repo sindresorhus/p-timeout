@@ -77,6 +77,7 @@ Exposed for instance checking and sub-classing.
 ## Related
 
 - [delay](https://github.com/sindresorhus/delay) - Delay a promise a specified amount of time
+- [p-min-delay](https://github.com/sindresorhus/p-min-delay) - Delay a promise a minimum amount of time
 - [p-retry](https://github.com/sindresorhus/p-retry) - Retry a promise-returning function
 - [More…](https://github.com/sindresorhus/promise-fun)
 
