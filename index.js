@@ -8,8 +8,8 @@ class TimeoutError extends Error {
 }
 
 module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
-	if (!Number.isFinite(ms)) {
-		throw new TypeError('Expected `ms` to be a finite number');
+	if (typeof ms !== 'number') {
+		throw new TypeError('Expected `ms` to be a number');
 	}
 
 	const timer = setTimeout(() => {
