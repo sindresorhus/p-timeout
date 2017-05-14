@@ -8,8 +8,8 @@ class TimeoutError extends Error {
 }
 
 module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
-	if (typeof ms !== 'number') {
-		throw new TypeError('Expected `ms` to be a number');
+	if (typeof ms !== 'number' && ms >= 0) {
+		throw new TypeError('Expected `ms` to be a positive number');
 	}
 
 	const timer = setTimeout(() => {
