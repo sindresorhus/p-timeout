@@ -1,4 +1,5 @@
 'use strict';
+const delay = require('delay');
 
 class TimeoutError extends Error {
 	constructor(message) {
@@ -12,7 +13,7 @@ module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
 		throw new TypeError('Expected `ms` to be a positive number');
 	}
 
-	const timer = setTimeout(() => {
+	delay(ms).then(() => {
 		if (typeof fallback === 'function') {
 			resolve(fallback());
 			return;
@@ -22,18 +23,7 @@ module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
 		const err = fallback instanceof Error ? fallback : new TimeoutError(message);
 
 		reject(err);
-	}, ms);
-
-	promise.then(
-		val => {
-			clearTimeout(timer);
-			resolve(val);
-		},
-		err => {
-			clearTimeout(timer);
-			reject(err);
-		}
-	);
+	});
+	promise.then(resolve, reject);
 });
-
 module.exports.TimeoutError = TimeoutError;
