@@ -6,7 +6,7 @@
 ## Install
 
 ```
-$ npm install --save p-timeout
+$ npm install p-timeout
 ```
 
 
