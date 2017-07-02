@@ -1,4 +1,5 @@
 'use strict';
+const pFinally = require('p-finally');
 
 class TimeoutError extends Error {
 	constructor(message) {
@@ -24,14 +25,10 @@ module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
 		reject(err);
 	}, ms);
 
-	promise.then(
-		val => {
+	pFinally(
+		promise.then(resolve, reject),
+		() => {
 			clearTimeout(timer);
-			resolve(val);
-		},
-		err => {
-			clearTimeout(timer);
-			reject(err);
 		}
 	);
 });

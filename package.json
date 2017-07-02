@@ -31,6 +31,9 @@
     "cancel",
     "bluebird"
   ],
+  "dependencies": {
+    "p-finally": "^1.0.0"
+  },
   "devDependencies": {
     "ava": "*",
     "delay": "^1.3.1",
