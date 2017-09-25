@@ -37,6 +37,7 @@
   "devDependencies": {
     "ava": "*",
     "delay": "^2.0.0",
+    "p-cancelable": "^0.3.0",
     "xo": "*"
   }
 }
