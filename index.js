@@ -1,5 +1,5 @@
-"use strict";
-const pFinally = require("p-finally");
+'use strict';
+const pFinally = require('p-finally');
 
 class TimeoutError extends Error {
 	constructor(message) {
