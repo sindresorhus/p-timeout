@@ -1,5 +1,5 @@
-'use strict';
-const pFinally = require('p-finally');
+"use strict";
+const pFinally = require("p-finally");
 
 class TimeoutError extends Error {
 	constructor(message) {
@@ -21,6 +21,10 @@ module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
 
 		const message = typeof fallback === 'string' ? fallback : `Promise timed out after ${ms} milliseconds`;
 		const err = fallback instanceof Error ? fallback : new TimeoutError(message);
+
+		if (typeof promise.cancel === 'function') {
+			promise.cancel(err);
+		}
 
 		reject(err);
 	}, ms);
