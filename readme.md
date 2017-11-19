@@ -29,6 +29,8 @@ pTimeout(delayedPromise, 50).then(() => 'foo');
 
 Returns a decorated `input` that times out after `ms` time.
 
+If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
+
 #### input
 
 Type: `Promise`
