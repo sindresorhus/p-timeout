@@ -1,6 +1,5 @@
 'use strict';
 const pFinally = require('p-finally');
-const pTry = require('p-try');
 
 class TimeoutError extends Error {
 	constructor(message) {
@@ -16,7 +15,11 @@ module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
 
 	const timer = setTimeout(() => {
 		if (typeof fallback === 'function') {
-			resolve(pTry(fallback));
+			try {
+				resolve(fallback());
+			} catch (err) {
+				reject(err);
+			}
 			return;
 		}
 
