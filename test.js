@@ -30,6 +30,9 @@ test('fallback argument', async t => {
 	await t.throws(m(delay(200), 50, 'rainbow'), 'rainbow');
 	await t.throws(m(delay(200), 50, new RangeError('cake')), RangeError);
 	await t.throws(m(delay(200), 50, () => Promise.reject(fixtureErr)), fixtureErr.message);
+	await t.throws(m(delay(200), 50, () => {
+		throw new RangeError('cake');
+	}), RangeError);
 });
 
 test('calls `.cancel()` on promise when it exists', async t => {

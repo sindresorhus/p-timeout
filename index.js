@@ -15,7 +15,11 @@ module.exports = (promise, ms, fallback) => new Promise((resolve, reject) => {
 
 	const timer = setTimeout(() => {
 		if (typeof fallback === 'function') {
-			resolve(fallback());
+			try {
+				resolve(fallback());
+			} catch (err) {
+				reject(err);
+			}
 			return;
 		}
 
