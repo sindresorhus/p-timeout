@@ -1,43 +1,45 @@
 {
-  "name": "p-timeout",
-  "version": "2.0.1",
-  "description": "Timeout a promise after a specified amount of time",
-  "license": "MIT",
-  "repository": "sindresorhus/p-timeout",
-  "author": {
-    "name": "Sindre Sorhus",
-    "email": "sindresorhus@gmail.com",
-    "url": "sindresorhus.com"
-  },
-  "engines": {
-    "node": ">=4"
-  },
-  "scripts": {
-    "test": "xo && ava"
-  },
-  "files": [
-    "index.js"
-  ],
-  "keywords": [
-    "promise",
-    "timeout",
-    "error",
-    "invalidate",
-    "async",
-    "await",
-    "promises",
-    "time",
-    "out",
-    "cancel",
-    "bluebird"
-  ],
-  "dependencies": {
-    "p-finally": "^1.0.0"
-  },
-  "devDependencies": {
-    "ava": "*",
-    "delay": "^2.0.0",
-    "p-cancelable": "^0.3.0",
-    "xo": "*"
-  }
+	"name": "p-timeout",
+	"version": "2.0.1",
+	"description": "Timeout a promise after a specified amount of time",
+	"license": "MIT",
+	"repository": "sindresorhus/p-timeout",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"scripts": {
+		"test": "xo && ava && tsd-check"
+	},
+	"files": [
+		"index.js",
+		"index.d.ts"
+	],
+	"keywords": [
+		"promise",
+		"timeout",
+		"error",
+		"invalidate",
+		"async",
+		"await",
+		"promises",
+		"time",
+		"out",
+		"cancel",
+		"bluebird"
+	],
+	"dependencies": {
+		"p-finally": "^1.0.0"
+	},
+	"devDependencies": {
+		"ava": "^1.3.1",
+		"delay": "^4.1.0",
+		"p-cancelable": "^1.1.0",
+		"tsd-check": "^0.3.0",
+		"xo": "^0.24.0"
+	}
 }
