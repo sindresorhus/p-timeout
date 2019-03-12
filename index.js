@@ -9,9 +9,9 @@ class TimeoutError extends Error {
 	}
 }
 
-const pTimeout = (promise, ms, fallback) => new Promise((resolve, reject) => {
-	if (typeof ms !== 'number' || ms < 0) {
-		throw new TypeError('Expected `ms` to be a positive number');
+const pTimeout = (promise, milliseconds, fallback) => new Promise((resolve, reject) => {
+	if (typeof milliseconds !== 'number' || milliseconds < 0) {
+		throw new TypeError('Expected `milliseconds` to be a positive number');
 	}
 
 	const timer = setTimeout(() => {
@@ -25,7 +25,7 @@ const pTimeout = (promise, ms, fallback) => new Promise((resolve, reject) => {
 			return;
 		}
 
-		const message = typeof fallback === 'string' ? fallback : `Promise timed out after ${ms} milliseconds`;
+		const message = typeof fallback === 'string' ? fallback : `Promise timed out after ${milliseconds} milliseconds`;
 		const timeoutError = fallback instanceof Error ? fallback : new TimeoutError(message);
 
 		if (typeof promise.cancel === 'function') {
@@ -33,8 +33,9 @@ const pTimeout = (promise, ms, fallback) => new Promise((resolve, reject) => {
 		}
 
 		reject(timeoutError);
-	}, ms);
+	}, milliseconds);
 
+	// TODO: Use native `finally` keyword when targeting Node.js 10
 	pFinally(
 		// eslint-disable-next-line promise/prefer-await-to-then
 		promise.then(resolve, reject),
