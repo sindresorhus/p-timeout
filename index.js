@@ -46,6 +46,7 @@ const pTimeout = (promise, milliseconds, fallback) => new Promise((resolve, reje
 });
 
 module.exports = pTimeout;
+// TODO: Remove this for the next major release
 module.exports.default = pTimeout;
 
 module.exports.TimeoutError = TimeoutError;
