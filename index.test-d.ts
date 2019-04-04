@@ -1,5 +1,6 @@
-import {expectType} from 'tsd-check';
-import pTimeout, {TimeoutError} from '.';
+import {expectType} from 'tsd';
+import pTimeout = require('.');
+import {TimeoutError} from '.';
 
 const delayedPromise: () => Promise<string> = () =>
 	new Promise(resolve => setTimeout(() => resolve('foo'), 200));
@@ -22,4 +23,5 @@ pTimeout(delayedPromise(), 50, () => 10).then(value => {
 	expectType<string | number>(value);
 });
 
-expectType<typeof TimeoutError>(TimeoutError);
+const timeoutError = new TimeoutError();
+expectType<TimeoutError>(timeoutError);
