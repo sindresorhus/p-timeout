@@ -14,6 +14,11 @@ const pTimeout = (promise, milliseconds, fallback) => new Promise((resolve, reje
 		throw new TypeError('Expected `milliseconds` to be a positive number');
 	}
 
+	if (milliseconds === Infinity) {
+		resolve(promise);
+		return;
+	}
+
 	const timer = setTimeout(() => {
 		if (typeof fallback === 'function') {
 			try {

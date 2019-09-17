@@ -18,6 +18,13 @@ test('throws when milliseconds is negative number', async t => {
 	await t.throwsAsync(pTimeout(delay(50), -1), TypeError);
 });
 
+test('handles milliseconds being `Infinity`', async t => {
+	t.is(
+		await pTimeout(delay(50, {value: fixture}), Infinity),
+		fixture
+	);
+});
+
 test('rejects after timeout', async t => {
 	await t.throwsAsync(pTimeout(delay(200), 50), pTimeout.TimeoutError);
 });

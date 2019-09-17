@@ -25,7 +25,8 @@ pTimeout(delayedPromise, 50).then(() => 'foo');
 
 ## API
 
-### pTimeout(input, milliseconds, [message | fallback])
+### pTimeout(input, milliseconds, message?)
+### pTimeout(input, milliseconds, fallback?)
 
 Returns a decorated `input` that times out after `milliseconds` time.
 
@@ -42,6 +43,8 @@ Promise to decorate.
 Type: `number`
 
 Milliseconds before timing out.
+
+Passing `Infinity` will cause it to never time out.
 
 #### message
 
@@ -82,8 +85,3 @@ Exposed for instance checking and sub-classing.
 - [p-min-delay](https://github.com/sindresorhus/p-min-delay) - Delay a promise a minimum amount of time
 - [p-retry](https://github.com/sindresorhus/p-retry) - Retry a promise-returning function
 - [More…](https://github.com/sindresorhus/promise-fun)
-
-
-## License
-
-MIT © [Sindre Sorhus](https://sindresorhus.com)

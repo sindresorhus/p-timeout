@@ -41,7 +41,7 @@ declare const pTimeout: {
 	If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
 	@param input - Promise to decorate.
-	@param milliseconds - Milliseconds before timing out.
+	@param milliseconds - Milliseconds before timing out. Passing `Infinity` will cause it to never time out.
 	@param fallback - Do something other than rejecting with an error on timeout. You could for example retry.
 	@returns A decorated `input` that times out after `milliseconds` time.
 
