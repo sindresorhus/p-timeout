@@ -72,3 +72,10 @@ test('accepts `customTimers` option', async t => {
 		}
 	});
 });
+
+test('clears timeout when clear triggered', t => {
+	const pT = pTimeout(delay(200), 50);
+	pT.clear();
+
+	t.is(pT.canceled, true);
+});
