@@ -1,6 +1,8 @@
 import test from 'ava';
 import delay from 'delay';
 import PCancelable from 'p-cancelable';
+import inRange from 'in-range';
+import timeSpan from 'time-span';
 import pTimeout from '.';
 
 const fixture = Symbol('fixture');
@@ -73,9 +75,12 @@ test('accepts `customTimers` option', async t => {
 	});
 });
 
-test('clears timeout when clear triggered', t => {
-	const pT = pTimeout(delay(200), 50);
-	pT.clear();
+test('clears timeout before time expire', async t => {
+	const end = timeSpan();
+	const promise = pTimeout(delay(300), 200);
 
-	t.is(pT.canceled, true);
+	promise.clear();
+
+	await promise;
+	t.true(inRange(end(), {start: 300, end: 500}));
 });
