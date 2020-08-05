@@ -40,6 +40,10 @@ declare namespace pTimeout {
 	};
 }
 
+interface ClearablePromise<T> extends Promise<T>{
+	clear: Function
+}
+
 declare const pTimeout: {
 	TimeoutError: typeof TimeoutErrorClass;
 
@@ -71,7 +75,7 @@ declare const pTimeout: {
 		milliseconds: number,
 		message?: string | Error,
 		options?: pTimeout.Options
-	): Promise<ValueType>;
+	): ClearablePromise<ValueType>;
 
 	/**
 	Timeout a promise after a specified amount of time.
@@ -100,7 +104,7 @@ declare const pTimeout: {
 		milliseconds: number,
 		fallback: () => ReturnType | Promise<ReturnType>,
 		options?: pTimeout.Options
-	): Promise<ValueType | ReturnType>;
-};
+	): ClearablePromise<ValueType | ReturnType>;
+	};
 
 export = pTimeout;
