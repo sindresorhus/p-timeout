@@ -41,7 +41,7 @@ declare namespace pTimeout {
 }
 
 interface ClearablePromise<T> extends Promise<T>{
-	clear: Function
+	clear: () => void
 }
 
 declare const pTimeout: {
