@@ -50,7 +50,7 @@ declare const pTimeout: {
 	default: typeof pTimeout;
 
 	/**
-	Timeout a promise after a specified amount of time.
+	Timeout a promise after a specified amount of time. It returns a decorated promise having `.clear()` method to be able to clear timeout.
 
 	If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
@@ -78,7 +78,7 @@ declare const pTimeout: {
 	): ClearablePromise<ValueType>;
 
 	/**
-	Timeout a promise after a specified amount of time.
+	Timeout a promise after a specified amount of time. It returns a decorated promise having `.clear()` method to be able to clear timeout.
 
 	If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
@@ -97,6 +97,7 @@ declare const pTimeout: {
 	pTimeout(delayedPromise(), 50, () => {
 		return pTimeout(delayedPromise(), 300);
 	});
+	promise.clear(); //Clear timeout
 	```
 	*/
 	<ValueType, ReturnType>(
@@ -105,6 +106,6 @@ declare const pTimeout: {
 		fallback: () => ReturnType | Promise<ReturnType>,
 		options?: pTimeout.Options
 	): ClearablePromise<ValueType | ReturnType>;
-	};
+};
 
 export = pTimeout;

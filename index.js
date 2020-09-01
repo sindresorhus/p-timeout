@@ -9,7 +9,7 @@ class TimeoutError extends Error {
 
 const pTimeout = (promise, milliseconds, fallback, options) => {
 	let timer;
-	const cancelablePromise = new Promise((resolve, reject) => {
+	const clearablePromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || milliseconds < 0) {
 			throw new TypeError('Expected `milliseconds` to be a positive number');
 		}
@@ -56,12 +56,12 @@ const pTimeout = (promise, milliseconds, fallback, options) => {
 		})();
 	});
 
-	cancelablePromise.clear = () => {
+	clearablePromise.clear = () => {
 		clearTimeout(timer);
 		timer = undefined;
 	};
 
-	return cancelablePromise;
+	return clearablePromise;
 };
 
 module.exports = pTimeout;
