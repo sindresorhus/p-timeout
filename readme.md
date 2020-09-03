@@ -25,7 +25,7 @@ pTimeout(delayedPromise, 50).then(() => 'foo');
 ### pTimeout(input, milliseconds, message?, options?)
 ### pTimeout(input, milliseconds, fallback?, options?)
 
-Returns a decorated `input` that times out after `milliseconds` time. Decorated input has `.clear()` method to be able to clear timeout.
+Returns a decorated `input` that times out after `milliseconds` time. Decorated input has a `.clear()` method, that method can be used to clear timeout.
 
 If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
