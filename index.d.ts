@@ -50,14 +50,14 @@ declare const pTimeout: {
 	default: typeof pTimeout;
 
 	/**
-	Timeout a promise after a specified amount of time.
+	Timeout a promise after a specified amount of time. It returns a decorated promise having `.clear()` method to be able to clear timeout.
 
 	If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
 	@param input - Promise to decorate.
 	@param milliseconds - Milliseconds before timing out.
 	@param message - Specify a custom error message or error. If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`. Default: `'Promise timed out after 50 milliseconds'`.
-	@returns A decorated `input` that times out after `milliseconds` time. Decorated input has a `.clear()` method, that method can be used to clear timeout.
+	@returns A decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
 
 	@example
 	```
@@ -85,7 +85,7 @@ declare const pTimeout: {
 	@param input - Promise to decorate.
 	@param milliseconds - Milliseconds before timing out. Passing `Infinity` will cause it to never time out.
 	@param fallback - Do something other than rejecting with an error on timeout. You could for example retry.
-	@returns A decorated `input` that times out after `milliseconds` time. Decorated input has a `.clear()` method, that method can be used to clear timeout.
+	@returns A decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
 
 	@example
 	```
