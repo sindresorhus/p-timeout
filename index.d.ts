@@ -40,6 +40,9 @@ declare namespace pTimeout {
 	};
 }
 
+/**
+ * Promise with `.clear() method
+ */
 interface ClearablePromise<T> extends Promise<T>{
 	clear: () => void
 }
