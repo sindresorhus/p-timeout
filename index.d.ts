@@ -53,7 +53,7 @@ declare const pTimeout: {
 	default: typeof pTimeout;
 
 	/**
-	Timeout a promise after a specified amount of time. It returns a decorated promise having `.clear()` method to be able to clear timeout.
+	Timeout a promise after a specified amount of time.
 
 	If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
