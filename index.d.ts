@@ -5,6 +5,39 @@ declare class TimeoutErrorClass extends Error {
 
 declare namespace pTimeout {
 	type TimeoutError = TimeoutErrorClass;
+
+	type Options = {
+		/**
+		Custom implementations for the `setTimeout` and `clearTimeout` functions.
+
+		Useful for testing purposes, in particular to work around [`sinon.useFakeTimers()`](https://sinonjs.org/releases/latest/fake-timers/).
+
+		@example
+		```
+		const pTimeout = require('p-timeout');
+		const sinon = require('sinon');
+
+		(async () => {
+			const originalSetTimeout = setTimeout;
+			const originalClearTimeout = clearTimeout;
+
+			sinon.useFakeTimers();
+
+			// Use `pTimeout` without being affected by `sinon.useFakeTimers()`:
+			await pTimeout(doSomething(), 2000, undefined, {
+				customTimers: {
+					setTimeout: originalSetTimeout,
+					clearTimeout: originalClearTimeout
+				}
+			});
+		})();
+		```
+		*/
+		readonly customTimers?: {
+			setTimeout?: typeof global.setTimeout;
+			clearTimeout?: typeof global.clearTimeout;
+		};
+	}
 }
 
 declare const pTimeout: {
@@ -32,7 +65,8 @@ declare const pTimeout: {
 	<ValueType>(
 		input: PromiseLike<ValueType>,
 		milliseconds: number,
-		message?: string | Error
+		message?: string | Error,
+		options?: pTimeout.Options
 	): Promise<ValueType>;
 
 	/**
@@ -60,7 +94,8 @@ declare const pTimeout: {
 	<ValueType, ReturnType>(
 		input: PromiseLike<ValueType>,
 		milliseconds: number,
-		fallback: () => ReturnType | Promise<ReturnType>
+		fallback: () => ReturnType | Promise<ReturnType>,
+		options?: pTimeout.Options
 	): Promise<ValueType | ReturnType>;
 
 	TimeoutError: typeof TimeoutErrorClass;

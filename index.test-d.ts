@@ -1,4 +1,4 @@
-import {expectType} from 'tsd';
+import {expectType, expectError} from 'tsd';
 import pTimeout = require('.');
 import {TimeoutError} from '.';
 
@@ -22,6 +22,13 @@ pTimeout(delayedPromise(), 50, async () => 10).then(value => {
 pTimeout(delayedPromise(), 50, () => 10).then(value => {
 	expectType<string | number>(value);
 });
+
+pTimeout(delayedPromise(), 50, undefined, {customTimers: {setTimeout}});
+pTimeout(delayedPromise(), 50, 'foo', {customTimers: {clearTimeout}});
+pTimeout(delayedPromise(), 50, new Error('error'), {customTimers: {setTimeout, clearTimeout}});
+pTimeout(delayedPromise(), 50, () => 10, {});
+
+expectError(pTimeout(delayedPromise(), 50, () => 10, {customTimers: {setTimeout: () => true}}));
 
 const timeoutError = new TimeoutError();
 expectType<TimeoutError>(timeoutError);

@@ -55,3 +55,20 @@ test('calls `.cancel()` on promise when it exists', async t => {
 	await t.throwsAsync(pTimeout(promise, 50), pTimeout.TimeoutError);
 	t.true(promise.isCanceled);
 });
+
+test('accepts `customTimers` option', async t => {
+	t.plan(2);
+
+	await pTimeout(delay(50), 123, undefined, {
+		customTimers: {
+			setTimeout(fn, milliseconds) {
+				t.is(milliseconds, 123);
+				return setTimeout(fn, milliseconds);
+			},
+			clearTimeout(timeoutId) {
+				t.pass();
+				return clearTimeout(timeoutId);
+			}
+		}
+	});
+});
