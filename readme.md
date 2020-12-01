@@ -1,14 +1,12 @@
-# p-timeout [![Build Status](https://travis-ci.org/sindresorhus/p-timeout.svg?branch=master)](https://travis-ci.org/sindresorhus/p-timeout)
+# p-timeout
 
 > Timeout a promise after a specified amount of time
-
 
 ## Install
 
 ```
 $ npm install p-timeout
 ```
-
 
 ## Usage
 
@@ -21,7 +19,6 @@ const delayedPromise = delay(200);
 pTimeout(delayedPromise, 50).then(() => 'foo');
 //=> [TimeoutError: Promise timed out after 50 milliseconds]
 ```
-
 
 ## API
 
@@ -48,7 +45,7 @@ Passing `Infinity` will cause it to never time out.
 
 #### message
 
-Type: `string` `Error`<br>
+Type: `string | Error`\
 Default: `'Promise timed out after 50 milliseconds'`
 
 Specify a custom error message or error.
@@ -77,7 +74,6 @@ pTimeout(delayedPromise(), 50, () => {
 ### pTimeout.TimeoutError
 
 Exposed for instance checking and sub-classing.
-
 
 ## Related
 
