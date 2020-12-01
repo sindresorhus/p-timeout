@@ -14,8 +14,8 @@ declare namespace pTimeout {
 
 		@example
 		```
-		const pTimeout = require('p-timeout');
-		const sinon = require('sinon');
+		import pTimeout = require('p-timeout');
+		import sinon = require('sinon');
 
 		(async () => {
 			const originalSetTimeout = setTimeout;
