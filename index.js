@@ -9,7 +9,7 @@ class TimeoutError extends Error {
 	}
 }
 
-const pTimeout = (promise, milliseconds, fallback) => new Promise((resolve, reject) => {
+const pTimeout = (promise, milliseconds, fallback, options) => new Promise((resolve, reject) => {
 	if (typeof milliseconds !== 'number' || milliseconds < 0) {
 		throw new TypeError('Expected `milliseconds` to be a positive number');
 	}
@@ -19,7 +19,12 @@ const pTimeout = (promise, milliseconds, fallback) => new Promise((resolve, reje
 		return;
 	}
 
-	const timer = setTimeout(() => {
+	options = {
+		customTimers: {setTimeout, clearTimeout},
+		...options
+	};
+
+	const timer = options.customTimers.setTimeout(() => {
 		if (typeof fallback === 'function') {
 			try {
 				resolve(fallback());
@@ -45,7 +50,7 @@ const pTimeout = (promise, milliseconds, fallback) => new Promise((resolve, reje
 		// eslint-disable-next-line promise/prefer-await-to-then
 		promise.then(resolve, reject),
 		() => {
-			clearTimeout(timer);
+			options.customTimers.clearTimeout(timer);
 		}
 	);
 });

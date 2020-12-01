@@ -22,8 +22,8 @@ pTimeout(delayedPromise, 50).then(() => 'foo');
 
 ## API
 
-### pTimeout(input, milliseconds, message?)
-### pTimeout(input, milliseconds, fallback?)
+### pTimeout(input, milliseconds, message?, options?)
+### pTimeout(input, milliseconds, fallback?, options?)
 
 Returns a decorated `input` that times out after `milliseconds` time.
 
@@ -69,6 +69,40 @@ const delayedPromise = () => delay(200);
 pTimeout(delayedPromise(), 50, () => {
 	return pTimeout(delayedPromise(), 300);
 });
+```
+
+#### options
+
+Type: `object`
+
+##### customTimers
+
+Type: `object` with function properties `setTimeout` and `clearTimeout`
+
+Custom implementations for the `setTimeout` and `clearTimeout` functions.
+
+Useful for testing purposes, in particular to work around [`sinon.useFakeTimers()`](https://sinonjs.org/releases/latest/fake-timers/).
+
+Example:
+
+```js
+const pTimeout = require('p-timeout');
+const sinon = require('sinon');
+
+(async () => {
+	const originalSetTimeout = setTimeout;
+	const originalClearTimeout = clearTimeout;
+
+	sinon.useFakeTimers();
+
+	// Use `pTimeout` without being affected by `sinon.useFakeTimers()`:
+	await pTimeout(doSomething(), 2000, undefined, {
+		customTimers: {
+			setTimeout: originalSetTimeout,
+			clearTimeout: originalClearTimeout
+		}
+	});
+})();
 ```
 
 ### pTimeout.TimeoutError
