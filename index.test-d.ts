@@ -23,12 +23,19 @@ pTimeout(delayedPromise(), 50, () => 10).then(value => {
 	expectType<string | number>(value);
 });
 
-pTimeout(delayedPromise(), 50, undefined, {customTimers: {setTimeout}});
-pTimeout(delayedPromise(), 50, 'foo', {customTimers: {clearTimeout}});
-pTimeout(delayedPromise(), 50, new Error('error'), {customTimers: {setTimeout, clearTimeout}});
+const customTimers = {setTimeout, clearTimeout};
+pTimeout(delayedPromise(), 50, undefined, {customTimers});
+pTimeout(delayedPromise(), 50, 'foo', {customTimers});
+pTimeout(delayedPromise(), 50, new Error('error'), {customTimers});
 pTimeout(delayedPromise(), 50, () => 10, {});
 
-expectError(pTimeout(delayedPromise(), 50, () => 10, {customTimers: {setTimeout: () => true}}));
+expectError(pTimeout(delayedPromise(), 50, () => 10, {customTimers: {setTimeout}}));
+expectError(pTimeout(delayedPromise(), 50, () => 10, {
+	customTimers: {
+		setTimeout: () => 42, // Invalid `setTimeout` implementation
+		clearTimeout
+	}
+}));
 
 const timeoutError = new TimeoutError();
 expectType<TimeoutError>(timeoutError);

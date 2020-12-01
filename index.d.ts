@@ -34,8 +34,8 @@ declare namespace pTimeout {
 		```
 		*/
 		readonly customTimers?: {
-			setTimeout?: typeof global.setTimeout;
-			clearTimeout?: typeof global.clearTimeout;
+			setTimeout: typeof global.setTimeout;
+			clearTimeout: typeof global.clearTimeout;
 		};
 	}
 }
