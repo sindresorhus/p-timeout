@@ -10,7 +10,7 @@
 		"url": "https://sindresorhus.com"
 	},
 	"engines": {
-		"node": ">=8"
+		"node": ">=10"
 	},
 	"scripts": {
 		"test": "xo && ava && tsd"
@@ -32,14 +32,11 @@
 		"cancel",
 		"bluebird"
 	],
-	"dependencies": {
-		"p-finally": "^1.0.0"
-	},
 	"devDependencies": {
-		"ava": "^1.4.1",
-		"delay": "^4.1.0",
+		"ava": "^2.4.0",
+		"delay": "^4.4.0",
 		"p-cancelable": "^2.0.0",
 		"tsd": "^0.13.1",
-		"xo": "^0.24.0"
+		"xo": "^0.35.0"
 	}
 }

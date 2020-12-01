@@ -2,8 +2,13 @@ import {expectType, expectError} from 'tsd';
 import pTimeout = require('.');
 import {TimeoutError} from '.';
 
-const delayedPromise: () => Promise<string> = () =>
-	new Promise(resolve => setTimeout(() => resolve('foo'), 200));
+const delayedPromise: () => Promise<string> = async () => {
+	return new Promise(resolve => {
+		setTimeout(() => {
+			resolve('foo');
+		}, 200);
+	});
+};
 
 pTimeout(delayedPromise(), 50).then(() => 'foo');
 pTimeout(delayedPromise(), 50, () => {

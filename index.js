@@ -1,7 +1,5 @@
 'use strict';
 
-const pFinally = require('p-finally');
-
 class TimeoutError extends Error {
 	constructor(message) {
 		super(message);
@@ -45,14 +43,15 @@ const pTimeout = (promise, milliseconds, fallback, options) => new Promise((reso
 		reject(timeoutError);
 	}, milliseconds);
 
-	// TODO: Use native `finally` keyword when targeting Node.js 10
-	pFinally(
-		// eslint-disable-next-line promise/prefer-await-to-then
-		promise.then(resolve, reject),
-		() => {
+	(async () => {
+		try {
+			resolve(await promise);
+		} catch (error) {
+			reject(error);
+		} finally {
 			options.customTimers.clearTimeout(timer);
 		}
-	);
+	})();
 });
 
 module.exports = pTimeout;

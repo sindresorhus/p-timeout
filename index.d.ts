@@ -37,10 +37,14 @@ declare namespace pTimeout {
 			setTimeout: typeof global.setTimeout;
 			clearTimeout: typeof global.clearTimeout;
 		};
-	}
+	};
 }
 
 declare const pTimeout: {
+	TimeoutError: typeof TimeoutErrorClass;
+
+	default: typeof pTimeout;
+
 	/**
 	Timeout a promise after a specified amount of time.
 
@@ -97,11 +101,6 @@ declare const pTimeout: {
 		fallback: () => ReturnType | Promise<ReturnType>,
 		options?: pTimeout.Options
 	): Promise<ValueType | ReturnType>;
-
-	TimeoutError: typeof TimeoutErrorClass;
-
-	// TODO: Remove this for the next major release
-	default: typeof pTimeout;
 };
 
 export = pTimeout;
