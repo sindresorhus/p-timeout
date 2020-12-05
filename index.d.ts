@@ -44,7 +44,7 @@ interface ClearablePromise<T> extends Promise<T>{
 	/**
 	 * .clear() method that clears the timeout.
 	 */
-	clear: () => void
+	clear: () => void;
 }
 
 declare const pTimeout: {
