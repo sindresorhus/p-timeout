@@ -1,46 +1,86 @@
-import {expectType, expectError} from 'tsd';
-import pTimeout = require('.');
-import {TimeoutError} from '.';
+import test from 'ava';
+import delay from 'delay';
+import PCancelable from 'p-cancelable';
+import pTimeout from '.';
+import inRange from 'in-range';
+import timeSpan from 'time-span';
 
-const delayedPromise: () => Promise<string> = async () => {
-	return new Promise(resolve => {
-		setTimeout(() => {
-			resolve('foo');
-		}, 200);
+const fixture = Symbol('fixture');
+const fixtureError = new Error('fixture');
+
+test('resolves before timeout', async t => {
+	t.is(await pTimeout(delay(50).then(() => fixture), 200), fixture);
+});
+
+test('throws when milliseconds is not number', async t => {
+	await t.throwsAsync(pTimeout(delay(50), '200'), TypeError);
+});
+
+test('throws when milliseconds is negative number', async t => {
+	await t.throwsAsync(pTimeout(delay(50), -1), TypeError);
+});
+
+test('handles milliseconds being `Infinity`', async t => {
+	t.is(
+		await pTimeout(delay(50, {value: fixture}), Infinity),
+		fixture
+	);
+});
+
+test('rejects after timeout', async t => {
+	await t.throwsAsync(pTimeout(delay(200), 50), pTimeout.TimeoutError);
+});
+
+test('rejects before timeout if specified promise rejects', async t => {
+	await t.throwsAsync(pTimeout(delay(50).then(() => Promise.reject(fixtureError)), 200), fixtureError.message);
+});
+
+test('fallback argument', async t => {
+	await t.throwsAsync(pTimeout(delay(200), 50, 'rainbow'), 'rainbow');
+	await t.throwsAsync(pTimeout(delay(200), 50, new RangeError('cake')), RangeError);
+	await t.throwsAsync(pTimeout(delay(200), 50, () => Promise.reject(fixtureError)), fixtureError.message);
+	await t.throwsAsync(pTimeout(delay(200), 50, () => {
+		throw new RangeError('cake');
+	}), RangeError);
+});
+
+test('calls `.cancel()` on promise when it exists', async t => {
+	const promise = new PCancelable(async (resolve, reject, onCancel) => {
+		onCancel(() => {
+			t.pass();
+		});
+
+		await delay(200);
+		resolve();
 	});
-};
 
-pTimeout(delayedPromise(), 50).then(() => 'foo');
-pTimeout(delayedPromise(), 50, () => {
-	return pTimeout(delayedPromise(), 300);
-});
-pTimeout(delayedPromise(), 50).then(value => expectType<string>(value));
-pTimeout(delayedPromise(), 50, 'error').then(value =>
-	expectType<string>(value)
-);
-pTimeout(delayedPromise(), 50, new Error('error')).then(value =>
-	expectType<string>(value)
-);
-pTimeout(delayedPromise(), 50, async () => 10).then(value => {
-	expectType<string | number>(value);
-});
-pTimeout(delayedPromise(), 50, () => 10).then(value => {
-	expectType<string | number>(value);
+	await t.throwsAsync(pTimeout(promise, 50), pTimeout.TimeoutError);
+	t.true(promise.isCanceled);
 });
 
-const customTimers = {setTimeout, clearTimeout};
-pTimeout(delayedPromise(), 50, undefined, {customTimers});
-pTimeout(delayedPromise(), 50, 'foo', {customTimers});
-pTimeout(delayedPromise(), 50, new Error('error'), {customTimers});
-pTimeout(delayedPromise(), 50, () => 10, {});
+test('accepts `customTimers` option', async t => {
+	t.plan(2);
 
-expectError(pTimeout(delayedPromise(), 50, () => 10, {customTimers: {setTimeout}}));
-expectError(pTimeout(delayedPromise(), 50, () => 10, {
-	customTimers: {
-		setTimeout: () => 42, // Invalid `setTimeout` implementation
-		clearTimeout
-	}
-}));
+	await pTimeout(delay(50), 123, undefined, {
+		customTimers: {
+			setTimeout(fn, milliseconds) {
+				t.is(milliseconds, 123);
+				return setTimeout(fn, milliseconds);
+			},
+			clearTimeout(timeoutId) {
+				t.pass();
+				return clearTimeout(timeoutId);
+			}
+		}
+	});
+});
 
-const timeoutError = new TimeoutError();
-expectType<TimeoutError>(timeoutError);
+test('clears timeout before time expire', async t => {
+	const end = timeSpan();
+	const promise = pTimeout(delay(300), 200);
+
+	promise.clear();
+
+	await promise;
+	t.true(inRange(end(), {start: 300, end: 500}));
+});
