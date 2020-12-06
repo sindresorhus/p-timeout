@@ -22,7 +22,7 @@ const pTimeout = (promise, milliseconds, fallback, options) => new Promise((reso
 		...options
 	};
 
-	const timer = options.customTimers.setTimeout(() => {
+	const timer = options.customTimers.setTimeout.call(undefined, () => {
 		if (typeof fallback === 'function') {
 			try {
 				resolve(fallback());
@@ -49,7 +49,7 @@ const pTimeout = (promise, milliseconds, fallback, options) => new Promise((reso
 		} catch (error) {
 			reject(error);
 		} finally {
-			options.customTimers.clearTimeout(timer);
+			options.customTimers.clearTimeout.call(undefined, timer);
 		}
 	})();
 });
