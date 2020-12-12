@@ -82,5 +82,5 @@ test('clears timeout before time expire', async t => {
 	promise.clear();
 
 	await promise;
-	t.true(inRange(end(), {start: 300, end: 500}));
+	t.true(inRange(end(), {start: 0, end: 350}));
 });
