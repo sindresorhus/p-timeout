@@ -42,7 +42,7 @@ declare namespace pTimeout {
 
 interface ClearablePromise<T> extends Promise<T>{
 	/**
-	 * .clear() method that clears the timeout.
+	 * Clear the timeout.
 	 */
 	clear: () => void;
 }
@@ -81,7 +81,7 @@ declare const pTimeout: {
 	): ClearablePromise<ValueType>;
 
 	/**
-	Timeout a promise after a specified amount of time. It returns a decorated promise having `.clear()` method to be able to clear timeout.
+	Timeout a promise after a specified amount of time.
 
 	If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
 
@@ -100,7 +100,6 @@ declare const pTimeout: {
 	pTimeout(delayedPromise(), 50, () => {
 		return pTimeout(delayedPromise(), 300);
 	});
-	promise.clear(); //Clear timeout
 	```
 	*/
 	<ValueType, ReturnType>(
