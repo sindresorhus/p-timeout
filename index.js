@@ -7,52 +7,62 @@ class TimeoutError extends Error {
 	}
 }
 
-const pTimeout = (promise, milliseconds, fallback, options) => new Promise((resolve, reject) => {
-	if (typeof milliseconds !== 'number' || milliseconds < 0) {
-		throw new TypeError('Expected `milliseconds` to be a positive number');
-	}
+const pTimeout = (promise, milliseconds, fallback, options) => {
+	let timer;
+	const cancelablePromise = new Promise((resolve, reject) => {
+		if (typeof milliseconds !== 'number' || milliseconds < 0) {
+			throw new TypeError('Expected `milliseconds` to be a positive number');
+		}
 
-	if (milliseconds === Infinity) {
-		resolve(promise);
-		return;
-	}
-
-	options = {
-		customTimers: {setTimeout, clearTimeout},
-		...options
-	};
-
-	const timer = options.customTimers.setTimeout.call(undefined, () => {
-		if (typeof fallback === 'function') {
-			try {
-				resolve(fallback());
-			} catch (error) {
-				reject(error);
-			}
-
+		if (milliseconds === Infinity) {
+			resolve(promise);
 			return;
 		}
 
-		const message = typeof fallback === 'string' ? fallback : `Promise timed out after ${milliseconds} milliseconds`;
-		const timeoutError = fallback instanceof Error ? fallback : new TimeoutError(message);
+		options = {
+			customTimers: {setTimeout, clearTimeout},
+			...options
+		};
 
-		if (typeof promise.cancel === 'function') {
-			promise.cancel();
-		}
+		timer = options.customTimers.setTimeout.call(undefined, () => {
+			if (typeof fallback === 'function') {
+				try {
+					resolve(fallback());
+				} catch (error) {
+					reject(error);
+				}
 
-		reject(timeoutError);
-	}, milliseconds);
+				return;
+			}
 
-	(async () => {
-		try {
-			resolve(await promise);
-		} catch (error) {
-			reject(error);
-		} finally {
-			options.customTimers.clearTimeout.call(undefined, timer);
-		}
-	})();
-});
+			const message = typeof fallback === 'string' ? fallback : `Promise timed out after ${milliseconds} milliseconds`;
+			const timeoutError = fallback instanceof Error ? fallback : new TimeoutError(message);
+
+			if (typeof promise.cancel === 'function') {
+				promise.cancel();
+			}
+
+			reject(timeoutError);
+		}, milliseconds);
+
+		(async () => {
+			try {
+				resolve(await promise);
+			} catch (error) {
+				reject(error);
+			} finally {
+				options.customTimers.clearTimeout.call(undefined, timer);
+			}
+		})();
+	});
+
+	cancelablePromise.clear = () => {
+		clearTimeout(timer);
+		timer = undefined;
+	};
+
+	return cancelablePromise;
+};
 
 module.exports = pTimeout;
 // TODO: Remove this for the next major release

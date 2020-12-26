@@ -1,6 +1,8 @@
 import test from 'ava';
 import delay from 'delay';
 import PCancelable from 'p-cancelable';
+import inRange from 'in-range';
+import timeSpan from 'time-span';
 import pTimeout from '.';
 
 const fixture = Symbol('fixture');
@@ -71,4 +73,14 @@ test('accepts `customTimers` option', async t => {
 			}
 		}
 	});
+});
+
+test('`.clear()` method', async t => {
+	const end = timeSpan();
+	const promise = pTimeout(delay(300), 200);
+
+	promise.clear();
+
+	await promise;
+	t.true(inRange(end(), {start: 0, end: 350}));
 });

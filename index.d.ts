@@ -40,6 +40,13 @@ declare namespace pTimeout {
 	};
 }
 
+interface ClearablePromise<T> extends Promise<T>{
+	/**
+	Clear the timeout.
+	*/
+	clear: () => void;
+}
+
 declare const pTimeout: {
 	TimeoutError: typeof TimeoutErrorClass;
 
@@ -53,7 +60,7 @@ declare const pTimeout: {
 	@param input - Promise to decorate.
 	@param milliseconds - Milliseconds before timing out.
 	@param message - Specify a custom error message or error. If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`. Default: `'Promise timed out after 50 milliseconds'`.
-	@returns A decorated `input` that times out after `milliseconds` time.
+	@returns A decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
 
 	@example
 	```
@@ -71,7 +78,7 @@ declare const pTimeout: {
 		milliseconds: number,
 		message?: string | Error,
 		options?: pTimeout.Options
-	): Promise<ValueType>;
+	): ClearablePromise<ValueType>;
 
 	/**
 	Timeout a promise after a specified amount of time.
@@ -81,7 +88,7 @@ declare const pTimeout: {
 	@param input - Promise to decorate.
 	@param milliseconds - Milliseconds before timing out. Passing `Infinity` will cause it to never time out.
 	@param fallback - Do something other than rejecting with an error on timeout. You could for example retry.
-	@returns A decorated `input` that times out after `milliseconds` time.
+	@returns A decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
 
 	@example
 	```
@@ -100,7 +107,7 @@ declare const pTimeout: {
 		milliseconds: number,
 		fallback: () => ReturnType | Promise<ReturnType>,
 		options?: pTimeout.Options
-	): Promise<ValueType | ReturnType>;
+	): ClearablePromise<ValueType | ReturnType>;
 };
 
 export = pTimeout;
