@@ -75,7 +75,7 @@ test('accepts `customTimers` option', async t => {
 	});
 });
 
-test('clears timeout before time expire', async t => {
+test('`.clear()` method', async t => {
 	const end = timeSpan();
 	const promise = pTimeout(delay(300), 200);
 
