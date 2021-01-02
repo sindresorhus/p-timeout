@@ -1,5 +1,6 @@
 declare class TimeoutErrorClass extends Error {
 	readonly name: 'TimeoutError';
+	readonly promise?: Promise<unknown>;
 	constructor(message?: string);
 }
 

@@ -40,6 +40,9 @@ const pTimeout = (promise, milliseconds, fallback, options) => {
 
 			if (typeof promise.cancel === 'function') {
 				promise.cancel();
+			} else {
+				// `.catch(undefined)` needed to report `unhandledRejection`
+				timeoutError.promise = promise.catch(undefined);
 			}
 
 			reject(timeoutError);
