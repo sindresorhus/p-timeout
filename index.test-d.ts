@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import {expectType, expectError} from 'tsd';
-import pTimeout = require('.');
-import {TimeoutError} from '.';
+import pTimeout, {TimeoutError} from './index.js';
 
 const delayedPromise: () => Promise<string> = async () => {
 	return new Promise(resolve => {
@@ -11,7 +11,7 @@ const delayedPromise: () => Promise<string> = async () => {
 };
 
 pTimeout(delayedPromise(), 50).then(() => 'foo');
-pTimeout(delayedPromise(), 50, () => {
+pTimeout(delayedPromise(), 50, async () => {
 	return pTimeout(delayedPromise(), 300);
 });
 pTimeout(delayedPromise(), 50).then(value => expectType<string>(value));

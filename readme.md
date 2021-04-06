@@ -11,12 +11,12 @@ $ npm install p-timeout
 ## Usage
 
 ```js
-const delay = require('delay');
-const pTimeout = require('p-timeout');
+import {setTimeout} from 'timers/promises';
+import pTimeout from 'p-timeout';
 
-const delayedPromise = delay(200);
+const delayedPromise = setTimeout(200);
 
-pTimeout(delayedPromise, 50).then(() => 'foo');
+await pTimeout(delayedPromise, 50);
 //=> [TimeoutError: Promise timed out after 50 milliseconds]
 ```
 
@@ -61,12 +61,12 @@ Do something other than rejecting with an error on timeout.
 You could for example retry:
 
 ```js
-const delay = require('delay');
-const pTimeout = require('p-timeout');
+import {setTimeout} from 'timers/promises';
+import pTimeout from 'p-timeout';
 
-const delayedPromise = () => delay(200);
+const delayedPromise = () => setTimeout(200);
 
-pTimeout(delayedPromise(), 50, () => {
+await pTimeout(delayedPromise(), 50, () => {
 	return pTimeout(delayedPromise(), 300);
 });
 ```
@@ -86,23 +86,21 @@ Useful for testing purposes, in particular to work around [`sinon.useFakeTimers(
 Example:
 
 ```js
-const pTimeout = require('p-timeout');
-const sinon = require('sinon');
+import {setTimeout} from 'timers/promises';
+import pTimeout from 'p-timeout';
 
-(async () => {
-	const originalSetTimeout = setTimeout;
-	const originalClearTimeout = clearTimeout;
+const originalSetTimeout = setTimeout;
+const originalClearTimeout = clearTimeout;
 
-	sinon.useFakeTimers();
+sinon.useFakeTimers();
 
-	// Use `pTimeout` without being affected by `sinon.useFakeTimers()`:
-	await pTimeout(doSomething(), 2000, undefined, {
-		customTimers: {
-			setTimeout: originalSetTimeout,
-			clearTimeout: originalClearTimeout
-		}
-	});
-})();
+// Use `pTimeout` without being affected by `sinon.useFakeTimers()`:
+await pTimeout(doSomething(), 2000, undefined, {
+	customTimers: {
+		setTimeout: originalSetTimeout,
+		clearTimeout: originalClearTimeout
+	}
+});
 ```
 
 ### pTimeout.TimeoutError

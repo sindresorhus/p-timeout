@@ -1,20 +1,18 @@
-'use strict';
-
-class TimeoutError extends Error {
+export class TimeoutError extends Error {
 	constructor(message) {
 		super(message);
 		this.name = 'TimeoutError';
 	}
 }
 
-const pTimeout = (promise, milliseconds, fallback, options) => {
+export default function pTimeout(promise, milliseconds, fallback, options) {
 	let timer;
 	const cancelablePromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || milliseconds < 0) {
 			throw new TypeError('Expected `milliseconds` to be a positive number');
 		}
 
-		if (milliseconds === Infinity) {
+		if (milliseconds === Number.POSITIVE_INFINITY) {
 			resolve(promise);
 			return;
 		}
@@ -62,10 +60,4 @@ const pTimeout = (promise, milliseconds, fallback, options) => {
 	};
 
 	return cancelablePromise;
-};
-
-module.exports = pTimeout;
-// TODO: Remove this for the next major release
-module.exports.default = pTimeout;
-
-module.exports.TimeoutError = TimeoutError;
+}

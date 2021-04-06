@@ -3,7 +3,7 @@ import delay from 'delay';
 import PCancelable from 'p-cancelable';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
-import pTimeout from '.';
+import pTimeout, {TimeoutError} from './index.js';
 
 const fixture = Symbol('fixture');
 const fixtureError = new Error('fixture');
@@ -13,35 +13,35 @@ test('resolves before timeout', async t => {
 });
 
 test('throws when milliseconds is not number', async t => {
-	await t.throwsAsync(pTimeout(delay(50), '200'), TypeError);
+	await t.throwsAsync(pTimeout(delay(50), '200'), {instanceOf: TypeError});
 });
 
 test('throws when milliseconds is negative number', async t => {
-	await t.throwsAsync(pTimeout(delay(50), -1), TypeError);
+	await t.throwsAsync(pTimeout(delay(50), -1), {instanceOf: TypeError});
 });
 
 test('handles milliseconds being `Infinity`', async t => {
 	t.is(
-		await pTimeout(delay(50, {value: fixture}), Infinity),
+		await pTimeout(delay(50, {value: fixture}), Number.POSITIVE_INFINITY),
 		fixture
 	);
 });
 
 test('rejects after timeout', async t => {
-	await t.throwsAsync(pTimeout(delay(200), 50), pTimeout.TimeoutError);
+	await t.throwsAsync(pTimeout(delay(200), 50), {instanceOf: TimeoutError});
 });
 
 test('rejects before timeout if specified promise rejects', async t => {
-	await t.throwsAsync(pTimeout(delay(50).then(() => Promise.reject(fixtureError)), 200), fixtureError.message);
+	await t.throwsAsync(pTimeout(delay(50).then(() => Promise.reject(fixtureError)), 200), {message: fixtureError.message});
 });
 
 test('fallback argument', async t => {
-	await t.throwsAsync(pTimeout(delay(200), 50, 'rainbow'), 'rainbow');
-	await t.throwsAsync(pTimeout(delay(200), 50, new RangeError('cake')), RangeError);
-	await t.throwsAsync(pTimeout(delay(200), 50, () => Promise.reject(fixtureError)), fixtureError.message);
+	await t.throwsAsync(pTimeout(delay(200), 50, 'rainbow'), {message: 'rainbow'});
+	await t.throwsAsync(pTimeout(delay(200), 50, new RangeError('cake')), {instanceOf: RangeError});
+	await t.throwsAsync(pTimeout(delay(200), 50, () => Promise.reject(fixtureError)), {message: fixtureError.message});
 	await t.throwsAsync(pTimeout(delay(200), 50, () => {
 		throw new RangeError('cake');
-	}), RangeError);
+	}), {instanceOf: RangeError});
 });
 
 test('calls `.cancel()` on promise when it exists', async t => {
@@ -54,7 +54,7 @@ test('calls `.cancel()` on promise when it exists', async t => {
 		resolve();
 	});
 
-	await t.throwsAsync(pTimeout(promise, 50), pTimeout.TimeoutError);
+	await t.throwsAsync(pTimeout(promise, 50), {instanceOf: TimeoutError});
 	t.true(promise.isCanceled);
 });
 

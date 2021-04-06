@@ -4,13 +4,16 @@
 	"description": "Timeout a promise after a specified amount of time",
 	"license": "MIT",
 	"repository": "sindresorhus/p-timeout",
+	"funding": "https://github.com/sponsors/sindresorhus",
 	"author": {
 		"name": "Sindre Sorhus",
 		"email": "sindresorhus@gmail.com",
 		"url": "https://sindresorhus.com"
 	},
+	"type": "module",
+	"exports": "./index.js",
 	"engines": {
-		"node": ">=10"
+		"node": ">=12"
 	},
 	"scripts": {
 		"test": "xo && ava && tsd"
@@ -33,12 +36,12 @@
 		"bluebird"
 	],
 	"devDependencies": {
-		"ava": "^2.4.0",
-		"delay": "^4.4.0",
-		"p-cancelable": "^2.0.0",
-		"tsd": "^0.13.1",
-		"xo": "^0.35.0",
-		"in-range": "^2.0.0",
-		"time-span": "^4.0.0"
+		"ava": "^3.15.0",
+		"delay": "^5.0.0",
+		"in-range": "^3.0.0",
+		"p-cancelable": "^2.1.0",
+		"time-span": "^4.0.0",
+		"tsd": "^0.14.0",
+		"xo": "^0.38.2"
 	}
 }
