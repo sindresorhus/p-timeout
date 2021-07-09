@@ -103,7 +103,7 @@ await pTimeout(doSomething(), 2000, undefined, {
 });
 ```
 
-### pTimeout.TimeoutError
+### TimeoutError
 
 Exposed for instance checking and sub-classing.
 
