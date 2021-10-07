@@ -9,7 +9,7 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 	let timer;
 	const cancelablePromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || milliseconds < 0) {
-			throw new TypeError('Expected `milliseconds` to be a positive number');
+			throw new TypeError(`Expected \`milliseconds\` to be a positive number, received \`${milliseconds}\``);
 		}
 
 		if (milliseconds === Number.POSITIVE_INFINITY) {
