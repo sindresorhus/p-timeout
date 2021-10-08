@@ -1,6 +1,6 @@
 {
 	"name": "p-timeout",
-	"version": "5.0.0",
+	"version": "5.0.1",
 	"description": "Timeout a promise after a specified amount of time",
 	"license": "MIT",
 	"repository": "sindresorhus/p-timeout",
