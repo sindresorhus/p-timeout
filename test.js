@@ -21,7 +21,7 @@ test('throws when milliseconds is negative number', async t => {
 });
 
 test('throws when milliseconds is NaN', async t => {
-	await t.throwsAsync(pTimeout(delay(50), NaN), {instanceOf: TypeError});
+	await t.throwsAsync(pTimeout(delay(50), Number.NaN), {instanceOf: TypeError});
 });
 
 test('handles milliseconds being `Infinity`', async t => {
