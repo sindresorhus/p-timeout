@@ -8,7 +8,7 @@ export class TimeoutError extends Error {
 export default function pTimeout(promise, milliseconds, fallback, options) {
 	let timer;
 	const cancelablePromise = new Promise((resolve, reject) => {
-		if (Math.sign(milliseconds) !== 1) {
+		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
 		}
 
