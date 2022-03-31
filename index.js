@@ -5,8 +5,25 @@ export class TimeoutError extends Error {
 	}
 }
 
+/**
+An error to be thrown when the request is aborted by AbortController.
+DOMException is thrown instead of this Error when DOMException is available.
+*/
+export class AbortError extends Error {
+	constructor(message) {
+		super();
+		this.name = 'AbortError';
+		this.message = message;
+	}
+}
+
+const getDOMException = errorMessage => globalThis.DOMException === undefined ?
+	new AbortError(errorMessage) :
+	new DOMException(errorMessage);
+
 export default function pTimeout(promise, milliseconds, fallback, options) {
 	let timer;
+
 	const cancelablePromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
@@ -21,6 +38,18 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 			customTimers: {setTimeout, clearTimeout},
 			...options
 		};
+
+		if (options && options.signal) {
+			const {signal} = options;
+
+			signal.addEventListener('abort', () => {
+				const reason = signal.reason === undefined ?
+					getDOMException('This operation was aborted.') :
+					signal.reason;
+
+				reject(reason instanceof Error ? reason : getDOMException(reason));
+			});
+		}
 
 		timer = options.customTimers.setTimeout.call(undefined, () => {
 			if (typeof fallback === 'function') {

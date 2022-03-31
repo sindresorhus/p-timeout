@@ -88,3 +88,17 @@ test('`.clear()` method', async t => {
 	await promise;
 	t.true(inRange(end(), {start: 0, end: 350}));
 });
+
+test('rejects when calls abort', async t => {
+	const abortController = new AbortController();
+
+	const promise = pTimeout(delay(3000), 2000, undefined, {
+		signal: abortController.signal
+	});
+
+	abortController.abort();
+
+	await t.throwsAsync(promise, {
+		name: 'AbortError'
+	});
+});
