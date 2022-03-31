@@ -89,7 +89,7 @@ test('`.clear()` method', async t => {
 	t.true(inRange(end(), {start: 0, end: 350}));
 });
 
-test('rejects when calls abort', async t => {
+test('rejects when calls `AbortController.abort`', async t => {
 	const abortController = new AbortController();
 
 	const promise = pTimeout(delay(3000), 2000, undefined, {
