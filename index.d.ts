@@ -45,17 +45,18 @@ export type Options = {
 	/**
 	You can abort the promise using [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController).
 
-	**Requires Node.js 16 or later.*
+	_Requires Node.js 16 or later._
 
 	@example
 	```
 	import pTimeout from 'p-timeout';
+	import delay from 'delay';
 
-	const delayedPromise = () => setTimeout(3000);
+	const delayedPromise = delay(3000);
 
 	const abortController = new AbortController();
 
-	pTimeout(delayedPromise(), 2000, undefined, {
+	pTimeout(delayedPromise, 2000, undefined, {
 		signal: abortController.signal
 	});
 

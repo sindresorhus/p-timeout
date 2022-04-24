@@ -113,12 +113,13 @@ You can abort the promise using [`AbortController`](https://developer.mozilla.or
 
 ```js
 import pTimeout from 'p-timeout';
+import delay from 'delay';
 
-const delayedPromise = () => setTimeout(3000);
+const delayedPromise = delay(3000);
 
 const abortController = new AbortController();
 
-pTimeout(delayedPromise(), 2000, undefined, {
+pTimeout(delayedPromise, 2000, undefined, {
 	signal: abortController.signal
 });
 
