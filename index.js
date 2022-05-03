@@ -21,6 +21,14 @@ const getDOMException = errorMessage => globalThis.DOMException === undefined ?
 	new AbortError(errorMessage) :
 	new DOMException(errorMessage);
 
+const getAbortedReason = signal => {
+	const reason = signal.reason === undefined ?
+		getDOMException('This operation was aborted.') :
+		signal.reason;
+
+	return reason instanceof Error ? reason : getDOMException(reason);
+};
+
 export default function pTimeout(promise, milliseconds, fallback, options) {
 	let timer;
 
@@ -39,15 +47,14 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 			...options
 		};
 
-		if (options && options.signal) {
+		if (options.signal) {
 			const {signal} = options;
+			if (signal.aborted) {
+				reject(getAbortedReason(signal));
+			}
 
 			signal.addEventListener('abort', () => {
-				const reason = signal.reason === undefined ?
-					getDOMException('This operation was aborted.') :
-					signal.reason;
-
-				reject(reason instanceof Error ? reason : getDOMException(reason));
+				reject(getAbortedReason(signal));
 			});
 		}
 
