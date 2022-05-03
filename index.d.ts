@@ -65,7 +65,7 @@ export type Options = {
 	}, 100);
 	```
 	*/
-	signal: AbortSignal;
+	signal?: globalThis.AbortSignal;
 };
 
 /**
