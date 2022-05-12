@@ -6,7 +6,13 @@ export class TimeoutError extends Error {
 }
 
 export default function pTimeout(promise, milliseconds, fallback, options) {
+	options = {
+		customTimers: {setTimeout, clearTimeout},
+		...options
+	};
+	
 	let timer;
+	
 	const cancelablePromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
@@ -16,11 +22,6 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 			resolve(promise);
 			return;
 		}
-
-		options = {
-			customTimers: {setTimeout, clearTimeout},
-			...options
-		};
 
 		timer = options.customTimers.setTimeout.call(undefined, () => {
 			if (typeof fallback === 'function') {
@@ -55,7 +56,7 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 	});
 
 	cancelablePromise.clear = () => {
-		clearTimeout(timer);
+		options.customTimers.clearTimeout.call(undefined, timer);
 		timer = undefined;
 	};
 
