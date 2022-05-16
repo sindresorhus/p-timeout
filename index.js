@@ -17,10 +17,16 @@ export class AbortError extends Error {
 	}
 }
 
+/**
+TODO: Remove AbortError and just throw DOMException when targeting Node 18.
+*/
 const getDOMException = errorMessage => globalThis.DOMException === undefined ?
 	new AbortError(errorMessage) :
 	new DOMException(errorMessage);
 
+/**
+TODO: Remove below function and just 'reject(signal.reason)' when targeting Node 18.
+*/
 const getAbortedReason = signal => {
 	const reason = signal.reason === undefined ?
 		getDOMException('This operation was aborted.') :

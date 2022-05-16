@@ -89,6 +89,9 @@ test('`.clear()` method', async t => {
 	t.true(inRange(end(), {start: 0, end: 350}));
 });
 
+/**
+TODO: Remove if statement when dropped Node 12, 14.
+*/
 if (globalThis.AbortController !== undefined) {
 	test('rejects when calling `AbortController#abort()`', async t => {
 		const abortController = new AbortController();
