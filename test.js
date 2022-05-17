@@ -90,7 +90,7 @@ test('`.clear()` method', async t => {
 });
 
 /**
-TODO: Remove if statement when dropped Node 12, 14.
+TODO: Remove if statement when targeting Node.js 16.
 */
 if (globalThis.AbortController !== undefined) {
 	test('rejects when calling `AbortController#abort()`', async t => {
