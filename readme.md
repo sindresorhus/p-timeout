@@ -119,13 +119,13 @@ const delayedPromise = delay(3000);
 
 const abortController = new AbortController();
 
-pTimeout(delayedPromise, 2000, undefined, {
-	signal: abortController.signal
-});
-
 setTimeout(() => {
 	abortController.abort();
 }, 100);
+
+await pTimeout(delayedPromise, 2000, undefined, {
+	signal: abortController.signal
+});
 ```
 
 ### TimeoutError
