@@ -103,6 +103,31 @@ await pTimeout(doSomething(), 2000, undefined, {
 });
 ```
 
+#### signal
+
+Type: [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+
+You can abort the promise using [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController).
+
+*Requires Node.js 16 or later.*
+
+```js
+import pTimeout from 'p-timeout';
+import delay from 'delay';
+
+const delayedPromise = delay(3000);
+
+const abortController = new AbortController();
+
+setTimeout(() => {
+	abortController.abort();
+}, 100);
+
+await pTimeout(delayedPromise, 2000, undefined, {
+	signal: abortController.signal
+});
+```
+
 ### TimeoutError
 
 Exposed for instance checking and sub-classing.

@@ -88,3 +88,34 @@ test('`.clear()` method', async t => {
 	await promise;
 	t.true(inRange(end(), {start: 0, end: 350}));
 });
+
+/**
+TODO: Remove if statement when targeting Node.js 16.
+*/
+if (globalThis.AbortController !== undefined) {
+	test('rejects when calling `AbortController#abort()`', async t => {
+		const abortController = new AbortController();
+
+		const promise = pTimeout(delay(3000), 2000, undefined, {
+			signal: abortController.signal
+		});
+
+		abortController.abort();
+
+		await t.throwsAsync(promise, {
+			name: 'AbortError'
+		});
+	});
+
+	test('already aborted signal', async t => {
+		const abortController = new AbortController();
+
+		abortController.abort();
+
+		await t.throwsAsync(pTimeout(delay(3000), 2000, undefined, {
+			signal: abortController.signal
+		}), {
+			name: 'AbortError'
+		});
+	});
+}

@@ -41,6 +41,31 @@ export type Options = {
 		setTimeout: typeof global.setTimeout;
 		clearTimeout: typeof global.clearTimeout;
 	};
+
+	/**
+	You can abort the promise using [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController).
+
+	_Requires Node.js 16 or later._
+
+	@example
+	```
+	import pTimeout from 'p-timeout';
+	import delay from 'delay';
+
+	const delayedPromise = delay(3000);
+
+	const abortController = new AbortController();
+
+	setTimeout(() => {
+		abortController.abort();
+	}, 100);
+
+	await pTimeout(delayedPromise, 2000, undefined, {
+		signal: abortController.signal
+	});
+	```
+	*/
+	signal?: globalThis.AbortSignal;
 };
 
 /**
