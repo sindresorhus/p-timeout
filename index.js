@@ -35,10 +35,12 @@ const getAbortedReason = signal => {
 	return reason instanceof Error ? reason : getDOMException(reason);
 };
 
-export default function pTimeout(promise, milliseconds, fallback, options) {
+export default function pTimeout(promise, options) {
 	let timer;
 
 	const cancelablePromise = new Promise((resolve, reject) => {
+		const {milliseconds, fallback, message} = options;
+
 		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
 		}
@@ -65,7 +67,7 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 		}
 
 		timer = options.customTimers.setTimeout.call(undefined, () => {
-			if (typeof fallback === 'function') {
+			if (fallback) {
 				try {
 					resolve(fallback());
 				} catch (error) {
@@ -75,8 +77,8 @@ export default function pTimeout(promise, milliseconds, fallback, options) {
 				return;
 			}
 
-			const message = typeof fallback === 'string' ? fallback : `Promise timed out after ${milliseconds} milliseconds`;
-			const timeoutError = fallback instanceof Error ? fallback : new TimeoutError(message);
+			const errorMessage = typeof message === 'string' ? message : `Promise timed out after ${milliseconds} milliseconds`;
+			const timeoutError = message instanceof Error ? message : new TimeoutError(errorMessage);
 
 			if (typeof promise.cancel === 'function') {
 				promise.cancel();
