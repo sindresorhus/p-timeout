@@ -9,43 +9,45 @@ const fixture = Symbol('fixture');
 const fixtureError = new Error('fixture');
 
 test('resolves before timeout', async t => {
-	t.is(await pTimeout(delay(50).then(() => fixture), 200), fixture);
+	t.is(await pTimeout(delay(50).then(() => fixture), {milliseconds: 200}), fixture);
 });
 
 test('throws when milliseconds is not number', async t => {
-	await t.throwsAsync(pTimeout(delay(50), '200'), {instanceOf: TypeError});
+	await t.throwsAsync(pTimeout(delay(50), {milliseconds: '200'}), {instanceOf: TypeError});
 });
 
 test('throws when milliseconds is negative number', async t => {
-	await t.throwsAsync(pTimeout(delay(50), -1), {instanceOf: TypeError});
+	await t.throwsAsync(pTimeout(delay(50), {milliseconds: -1}), {instanceOf: TypeError});
 });
 
 test('throws when milliseconds is NaN', async t => {
-	await t.throwsAsync(pTimeout(delay(50), Number.NaN), {instanceOf: TypeError});
+	await t.throwsAsync(pTimeout(delay(50), {milliseconds: Number.NaN}), {instanceOf: TypeError});
 });
 
 test('handles milliseconds being `Infinity`', async t => {
 	t.is(
-		await pTimeout(delay(50, {value: fixture}), Number.POSITIVE_INFINITY),
+		await pTimeout(delay(50, {value: fixture}), {milliseconds: Number.POSITIVE_INFINITY}),
 		fixture
 	);
 });
 
 test('rejects after timeout', async t => {
-	await t.throwsAsync(pTimeout(delay(200), 50), {instanceOf: TimeoutError});
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50}), {instanceOf: TimeoutError});
 });
 
 test('rejects before timeout if specified promise rejects', async t => {
-	await t.throwsAsync(pTimeout(delay(50).then(() => Promise.reject(fixtureError)), 200), {message: fixtureError.message});
+	await t.throwsAsync(pTimeout(delay(50).then(() => {
+		throw fixtureError;
+	}), {milliseconds: 200}), {message: fixtureError.message});
 });
 
 test('fallback argument', async t => {
-	await t.throwsAsync(pTimeout(delay(200), 50, 'rainbow'), {message: 'rainbow'});
-	await t.throwsAsync(pTimeout(delay(200), 50, new RangeError('cake')), {instanceOf: RangeError});
-	await t.throwsAsync(pTimeout(delay(200), 50, () => Promise.reject(fixtureError)), {message: fixtureError.message});
-	await t.throwsAsync(pTimeout(delay(200), 50, () => {
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: 'rainbow'}), {message: 'rainbow'});
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: new RangeError('cake')}), {instanceOf: RangeError});
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback: () => Promise.reject(fixtureError)}), {message: fixtureError.message});
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback() {
 		throw new RangeError('cake');
-	}), {instanceOf: RangeError});
+	}}), {instanceOf: RangeError});
 });
 
 test('calls `.cancel()` on promise when it exists', async t => {
@@ -58,14 +60,15 @@ test('calls `.cancel()` on promise when it exists', async t => {
 		resolve();
 	});
 
-	await t.throwsAsync(pTimeout(promise, 50), {instanceOf: TimeoutError});
+	await t.throwsAsync(pTimeout(promise, {milliseconds: 50}), {instanceOf: TimeoutError});
 	t.true(promise.isCanceled);
 });
 
 test('accepts `customTimers` option', async t => {
 	t.plan(2);
 
-	await pTimeout(delay(50), 123, undefined, {
+	await pTimeout(delay(50), {
+		milliseconds: 123,
 		customTimers: {
 			setTimeout(fn, milliseconds) {
 				t.is(milliseconds, 123);
@@ -81,7 +84,7 @@ test('accepts `customTimers` option', async t => {
 
 test('`.clear()` method', async t => {
 	const end = timeSpan();
-	const promise = pTimeout(delay(300), 200);
+	const promise = pTimeout(delay(300), {milliseconds: 200});
 
 	promise.clear();
 
@@ -96,7 +99,8 @@ if (globalThis.AbortController !== undefined) {
 	test('rejects when calling `AbortController#abort()`', async t => {
 		const abortController = new AbortController();
 
-		const promise = pTimeout(delay(3000), 2000, undefined, {
+		const promise = pTimeout(delay(3000), {
+			milliseconds: 2000,
 			signal: abortController.signal
 		});
 
@@ -112,7 +116,8 @@ if (globalThis.AbortController !== undefined) {
 
 		abortController.abort();
 
-		await t.throwsAsync(pTimeout(delay(3000), 2000, undefined, {
+		await t.throwsAsync(pTimeout(delay(3000), {
+			milliseconds: 2000,
 			signal: abortController.signal
 		}), {
 			name: 'AbortError'
