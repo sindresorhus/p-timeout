@@ -27,7 +27,7 @@ test('throws when milliseconds is NaN', async t => {
 test('handles milliseconds being `Infinity`', async t => {
 	t.is(
 		await pTimeout(delay(50, {value: fixture}), {milliseconds: Number.POSITIVE_INFINITY}),
-		fixture
+		fixture,
 	);
 });
 
@@ -77,8 +77,8 @@ test('accepts `customTimers` option', async t => {
 			clearTimeout(timeoutId) {
 				t.pass();
 				return clearTimeout(timeoutId);
-			}
-		}
+			},
+		},
 	});
 });
 
@@ -101,13 +101,13 @@ if (globalThis.AbortController !== undefined) {
 
 		const promise = pTimeout(delay(3000), {
 			milliseconds: 2000,
-			signal: abortController.signal
+			signal: abortController.signal,
 		});
 
 		abortController.abort();
 
 		await t.throwsAsync(promise, {
-			name: 'AbortError'
+			name: 'AbortError',
 		});
 	});
 
@@ -118,9 +118,9 @@ if (globalThis.AbortController !== undefined) {
 
 		await t.throwsAsync(pTimeout(delay(3000), {
 			milliseconds: 2000,
-			signal: abortController.signal
+			signal: abortController.signal,
 		}), {
-			name: 'AbortError'
+			name: 'AbortError',
 		});
 	});
 }

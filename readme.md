@@ -4,14 +4,14 @@
 
 ## Install
 
-```
-$ npm install p-timeout
+```sh
+npm install p-timeout
 ```
 
 ## Usage
 
 ```js
-import {setTimeout} from 'timers/promises';
+import {setTimeout} from 'node:timers/promises';
 import pTimeout from 'p-timeout';
 
 const delayedPromise = setTimeout(200);
@@ -66,7 +66,7 @@ Do something other than rejecting with an error on timeout.
 You could for example retry:
 
 ```js
-import {setTimeout} from 'timers/promises';
+import {setTimeout} from 'node:timers/promises';
 import pTimeout from 'p-timeout';
 
 const delayedPromise = () => setTimeout(200);
@@ -90,7 +90,7 @@ Useful for testing purposes, in particular to work around [`sinon.useFakeTimers(
 Example:
 
 ```js
-import {setTimeout} from 'timers/promises';
+import {setTimeout} from 'node:timers/promises';
 import pTimeout from 'p-timeout';
 
 const originalSetTimeout = setTimeout;

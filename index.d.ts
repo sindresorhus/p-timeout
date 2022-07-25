@@ -25,7 +25,7 @@ export type Options<ReturnType> = {
 
 	@example
 	```
-	import {setTimeout} from 'timers/promises';
+	import {setTimeout} from 'node:timers/promises';
 	import pTimeout from 'p-timeout';
 
 	const delayedPromise = () => setTimeout(200);
@@ -116,7 +116,7 @@ If you pass in a cancelable promise, specifically a promise with a `.cancel()` m
 
 @example
 ```
-import {setTimeout} from 'timers/promises';
+import {setTimeout} from 'node:timers/promises';
 import pTimeout from 'p-timeout';
 
 const delayedPromise = () => setTimeout(200);
