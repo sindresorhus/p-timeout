@@ -47,7 +47,7 @@ export type Options<ReturnType> = {
 
 	If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`.
 	*/
-	message?: string | Error;
+	message?: string | Error | false;
 
 	/**
 	Custom implementations for the `setTimeout` and `clearTimeout` functions.

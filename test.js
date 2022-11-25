@@ -35,6 +35,13 @@ test('rejects after timeout', async t => {
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50}), {instanceOf: TimeoutError});
 });
 
+test('resolves after timeout with message:false', async t => {
+	t.is(
+		await pTimeout(delay(200), {milliseconds: 50, message: false}),
+		undefined,
+	);
+});
+
 test('rejects before timeout if specified promise rejects', async t => {
 	await t.throwsAsync(pTimeout(delay(50).then(() => {
 		throw fixtureError;

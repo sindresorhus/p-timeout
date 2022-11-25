@@ -80,7 +80,7 @@ export default function pTimeout(promise, options) {
 			if (typeof promise.cancel === 'function') {
 				promise.cancel();
 			}
-			
+
 			if (message === false) {
 				resolve();
 			}

@@ -50,10 +50,10 @@ Passing `Infinity` will cause it to never time out.
 
 ##### message
 
-Type: `string | Error`\
+Type: `string | Error | false`\
 Default: `'Promise timed out after 50 milliseconds'`
 
-Specify a custom error message or error.
+Specify a custom error message or error. If you supply `false`, the promise will resolve successfully instead of rejecting.
 
 If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`.
 
