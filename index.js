@@ -83,12 +83,12 @@ export default function pTimeout(promise, options) {
 
 			if (message === false) {
 				resolve();
+			} else if (message instanceof Error) {
+				reject(message);
+			} else {
+				const errorMessage = message ?? `Promise timed out after ${milliseconds} milliseconds`;
+				reject(new TimeoutError(errorMessage));
 			}
-
-			const errorMessage = typeof message === 'string' ? message : `Promise timed out after ${milliseconds} milliseconds`;
-			const timeoutError = message instanceof Error ? message : new TimeoutError(errorMessage);
-
-			reject(timeoutError);
 		}, milliseconds);
 
 		(async () => {
