@@ -35,9 +35,9 @@ test('rejects after timeout', async t => {
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50}), {instanceOf: TimeoutError});
 });
 
-test('resolves after timeout with message:false', async t => {
+test('resolves after timeout with error:false', async t => {
 	t.is(
-		await pTimeout(delay(200), {milliseconds: 50, message: false}),
+		await pTimeout(delay(200), {milliseconds: 50, error: false}),
 		undefined,
 	);
 });
@@ -49,8 +49,8 @@ test('rejects before timeout if specified promise rejects', async t => {
 });
 
 test('fallback argument', async t => {
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: 'rainbow'}), {message: 'rainbow'});
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: new RangeError('cake')}), {instanceOf: RangeError});
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, error: 'rainbow'}), {message: 'rainbow'});
+	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, error: new RangeError('cake')}), {instanceOf: RangeError});
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback: () => Promise.reject(fixtureError)}), {message: fixtureError.message});
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback() {
 		throw new RangeError('cake');

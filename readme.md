@@ -48,7 +48,7 @@ Milliseconds before timing out.
 
 Passing `Infinity` will cause it to never time out.
 
-##### message
+##### error
 
 Type: `string | Error | false`\
 Default: `'Promise timed out after 50 milliseconds'`
