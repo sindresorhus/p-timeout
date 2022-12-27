@@ -45,7 +45,7 @@ export type Options<ReturnType> = {
 	/**
 	Specify a custom error message or error.
 
-	If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`.
+	If you do a custom error, it's recommended to sub-class `TimeoutError`.
 	*/
 	error?: string | Error | false;
 

@@ -53,9 +53,21 @@ Passing `Infinity` will cause it to never time out.
 Type: `string | Error | false`\
 Default: `'Promise timed out after 50 milliseconds'`
 
-Specify a custom error message or error. If you supply `false`, the promise will resolve successfully instead of rejecting.
+Specify a custom error message or error to throw when it times out:
 
-If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`.
+- `error: 'too slow'` will throw `TimeoutError('too slow')`
+- `error: new MyCustomError('it’s over 9000')` will throw the same error instance
+- `error: false` will make the promise resolve with `undefined` instead of rejecting
+
+If you do a custom error, it's recommended to sub-class `TimeoutError`:
+
+```js
+import {TimeoutError} from 'p-timeout';
+
+class MyCustomError extends TimeoutError {
+	name = "MyCustomError";
+}
+```
 
 ##### fallback
 
