@@ -39,7 +39,7 @@ export default function pTimeout(promise, options) {
 	const {
 		milliseconds,
 		fallback,
-		error,
+		message,
 		customTimers = {setTimeout, clearTimeout},
 	} = options;
 
@@ -81,12 +81,12 @@ export default function pTimeout(promise, options) {
 				promise.cancel();
 			}
 
-			if (error === false) {
+			if (message === false) {
 				resolve();
-			} else if (error instanceof Error) {
-				reject(error);
+			} else if (message instanceof Error) {
+				reject(message);
 			} else {
-				const errorMessage = error ?? `Promise timed out after ${milliseconds} milliseconds`;
+				const errorMessage = message ?? `Promise timed out after ${milliseconds} milliseconds`;
 				reject(new TimeoutError(errorMessage));
 			}
 		}, milliseconds);

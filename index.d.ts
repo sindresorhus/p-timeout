@@ -47,7 +47,7 @@ export type Options<ReturnType> = {
 
 	If you do a custom error, it's recommended to sub-class `TimeoutError`.
 	*/
-	error?: string | Error | false;
+	message?: string | Error | false;
 
 	/**
 	Custom implementations for the `setTimeout` and `clearTimeout` functions.

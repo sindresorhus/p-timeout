@@ -13,13 +13,13 @@ pTimeout(delayedPromise(), {milliseconds: 50, fallback: async () => pTimeout(del
 pTimeout(delayedPromise(), {milliseconds: 50}).then(value => {
 	expectType<string>(value);
 });
-pTimeout(delayedPromise(), {milliseconds: 50, error: 'error'}).then(value => {
+pTimeout(delayedPromise(), {milliseconds: 50, message: 'error'}).then(value => {
 	expectType<string>(value);
 });
-pTimeout(delayedPromise(), {milliseconds: 50, error: false}).then(value => {
+pTimeout(delayedPromise(), {milliseconds: 50, message: false}).then(value => {
 	expectType<string>(value);
 });
-pTimeout(delayedPromise(), {milliseconds: 50, error: new Error('error')}).then(value => {
+pTimeout(delayedPromise(), {milliseconds: 50, message: new Error('error')}).then(value => {
 	expectType<string>(value);
 });
 pTimeout(delayedPromise(), {milliseconds: 50, fallback: async () => 10}).then(value => {
@@ -31,8 +31,8 @@ pTimeout(delayedPromise(), {milliseconds: 50, fallback: () => 10}).then(value =>
 
 const customTimers = {setTimeout, clearTimeout};
 pTimeout(delayedPromise(), {milliseconds: 50, customTimers});
-pTimeout(delayedPromise(), {milliseconds: 50, error: 'foo', customTimers});
-pTimeout(delayedPromise(), {milliseconds: 50, error: new Error('error'), customTimers});
+pTimeout(delayedPromise(), {milliseconds: 50, message: 'foo', customTimers});
+pTimeout(delayedPromise(), {milliseconds: 50, message: new Error('error'), customTimers});
 pTimeout(delayedPromise(), {milliseconds: 50, fallback: () => 10});
 
 expectError(pTimeout(delayedPromise(), {

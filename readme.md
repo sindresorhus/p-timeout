@@ -48,16 +48,16 @@ Milliseconds before timing out.
 
 Passing `Infinity` will cause it to never time out.
 
-##### error
+##### message
 
 Type: `string | Error | false`\
 Default: `'Promise timed out after 50 milliseconds'`
 
 Specify a custom error message or error to throw when it times out:
 
-- `error: 'too slow'` will throw `TimeoutError('too slow')`
-- `error: new MyCustomError('it’s over 9000')` will throw the same error instance
-- `error: false` will make the promise resolve with `undefined` instead of rejecting
+- `message: 'too slow'` will throw `TimeoutError('too slow')`
+- `message: new MyCustomError('it’s over 9000')` will throw the same error instance
+- `message: false` will make the promise resolve with `undefined` instead of rejecting
 
 If you do a custom error, it's recommended to sub-class `TimeoutError`:
 
