@@ -17,7 +17,7 @@ pTimeout(delayedPromise(), {milliseconds: 50, message: 'error'}).then(value => {
 	expectType<string>(value);
 });
 pTimeout(delayedPromise(), {milliseconds: 50, message: false}).then(value => {
-	expectType<string>(value);
+	expectType<string | undefined>(value);
 });
 pTimeout(delayedPromise(), {milliseconds: 50, message: new Error('error')}).then(value => {
 	expectType<string>(value);
