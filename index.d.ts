@@ -51,7 +51,7 @@ export type Options<ReturnType> = {
 
 	If you do a custom error, it's recommended to sub-class `TimeoutError`:
 
-	```js
+	```
 	import {TimeoutError} from 'p-timeout';
 
 	class MyCustomError extends TimeoutError {
