@@ -143,5 +143,9 @@ await pTimeout(delayedPromise(), {
 */
 export default function pTimeout<ValueType, ReturnType = ValueType>(
 	input: PromiseLike<ValueType>,
+	options: Options<ReturnType> & {message: false}
+): ClearablePromise<ValueType | ReturnType | undefined>;
+export default function pTimeout<ValueType, ReturnType = ValueType>(
+	input: PromiseLike<ValueType>,
 	options: Options<ReturnType>
 ): ClearablePromise<ValueType | ReturnType>;
