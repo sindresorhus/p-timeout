@@ -43,11 +43,23 @@ export type Options<ReturnType> = {
 	fallback?: () => ReturnType | Promise<ReturnType>;
 
 	/**
-	Specify a custom error message or error.
+	Specify a custom error message or error to throw when it times out:
 
-	If you do a custom error, it's recommended to sub-class `pTimeout.TimeoutError`.
+	- `message: 'too slow'` will throw `TimeoutError('too slow')`
+	- `message: new MyCustomError('it’s over 9000')` will throw the same error instance
+	- `message: false` will make the promise resolve with `undefined` instead of rejecting
+
+	If you do a custom error, it's recommended to sub-class `TimeoutError`:
+
+	```
+	import {TimeoutError} from 'p-timeout';
+
+	class MyCustomError extends TimeoutError {
+		name = "MyCustomError";
+	}
+	```
 	*/
-	message?: string | Error;
+	message?: string | Error | false;
 
 	/**
 	Custom implementations for the `setTimeout` and `clearTimeout` functions.
@@ -129,6 +141,10 @@ await pTimeout(delayedPromise(), {
 });
 ```
 */
+export default function pTimeout<ValueType, ReturnType = ValueType>(
+	input: PromiseLike<ValueType>,
+	options: Options<ReturnType> & {message: false}
+): ClearablePromise<ValueType | ReturnType | undefined>;
 export default function pTimeout<ValueType, ReturnType = ValueType>(
 	input: PromiseLike<ValueType>,
 	options: Options<ReturnType>
