@@ -65,7 +65,7 @@ export default function pTimeout(promise, options) {
 				reject(getAbortedReason(signal));
 			});
 		}
-
+		const timeoutError new TimeoutError();
 		timer = customTimers.setTimeout.call(undefined, () => {
 			if (fallback) {
 				try {
@@ -87,7 +87,8 @@ export default function pTimeout(promise, options) {
 				reject(message);
 			} else {
 				const errorMessage = message ?? `Promise timed out after ${milliseconds} milliseconds`;
-				reject(new TimeoutError(errorMessage));
+				timeoutError.message = errorMessage;
+				reject(timeoutError);
 			}
 		}, milliseconds);
 
