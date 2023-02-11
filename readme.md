@@ -86,7 +86,7 @@ const delayedPromise = () => setTimeout(200);
 await pTimeout(delayedPromise(), {
 	milliseconds: 50,
 	fallback: () => {
-		return pTimeout(delayedPromise(), 300);
+		return pTimeout(delayedPromise(), {milliseconds: 300});
 	},
 });
 ```
