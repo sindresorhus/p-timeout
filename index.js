@@ -65,6 +65,7 @@ export default function pTimeout(promise, options) {
 				reject(getAbortedReason(signal));
 			});
 		}
+
 		const timeoutError = new TimeoutError();
 		timer = customTimers.setTimeout.call(undefined, () => {
 			if (fallback) {
