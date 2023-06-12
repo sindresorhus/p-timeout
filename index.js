@@ -45,7 +45,7 @@ export default function pTimeout(promise, options) {
 
 	let timer;
 
-	const cancelablePromise = new Promise((resolve, reject) => {
+	const wrappedPromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
 		}
@@ -99,10 +99,12 @@ export default function pTimeout(promise, options) {
 				resolve(await promise);
 			} catch (error) {
 				reject(error);
-			} finally {
-				customTimers.clearTimeout.call(undefined, timer);
 			}
 		})();
+	});
+
+	const cancelablePromise = wrappedPromise.finally(() => {
+		cancelablePromise.clear();
 	});
 
 	cancelablePromise.clear = () => {
