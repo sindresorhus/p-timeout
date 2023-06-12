@@ -130,4 +130,17 @@ if (globalThis.AbortController !== undefined) {
 			name: 'AbortError',
 		});
 	});
+
+	test('aborts even if milliseconds are set to infinity', async t => {
+		const abortController = new AbortController();
+
+		abortController.abort();
+
+		await t.throwsAsync(pTimeout(delay(3000), {
+			milliseconds: Number.POSITIVE_INFINITY,
+			signal: abortController.signal,
+		}), {
+			name: 'AbortError',
+		});
+	});
 }
