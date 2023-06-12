@@ -99,18 +99,16 @@ export default function pTimeout(promise, options) {
 				resolve(await promise);
 			} catch (error) {
 				reject(error);
+			} finally {
+				customTimers.clearTimeout.call(undefined, timer);
 			}
 		})();
 	});
 
-	const returnedPromise = cancelablePromise.finally(() => {
-		returnedPromise.clear();
-	});
-
-	returnedPromise.clear = () => {
+	cancelablePromise.clear = () => {
 		customTimers.clearTimeout.call(undefined, timer);
 		timer = undefined;
 	};
 
-	return returnedPromise;
+	return cancelablePromise;
 }
