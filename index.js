@@ -50,11 +50,6 @@ export default function pTimeout(promise, options) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
 		}
 
-		if (milliseconds === Number.POSITIVE_INFINITY) {
-			resolve(promise);
-			return;
-		}
-
 		if (options.signal) {
 			const {signal} = options;
 			if (signal.aborted) {
@@ -64,6 +59,11 @@ export default function pTimeout(promise, options) {
 			signal.addEventListener('abort', () => {
 				reject(getAbortedReason(signal));
 			});
+		}
+
+		if (milliseconds === Number.POSITIVE_INFINITY) {
+			promise.then(resolve, reject);
+			return;
 		}
 
 		// We create the error outside of `setTimeout` to preserve the stack trace.
@@ -99,16 +99,18 @@ export default function pTimeout(promise, options) {
 				resolve(await promise);
 			} catch (error) {
 				reject(error);
-			} finally {
-				customTimers.clearTimeout.call(undefined, timer);
 			}
 		})();
 	});
 
-	cancelablePromise.clear = () => {
+	const returnedPromise = cancelablePromise.finally(() => {
+		returnedPromise.clear();
+	});
+
+	returnedPromise.clear = () => {
 		customTimers.clearTimeout.call(undefined, timer);
 		timer = undefined;
 	};
 
-	return cancelablePromise;
+	return returnedPromise;
 }
