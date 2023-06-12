@@ -3,12 +3,12 @@ export class TimeoutError extends Error {
 	constructor(message?: string);
 }
 
-export interface ClearablePromise<T> extends Promise<T> {
+export type ClearablePromise<T> = {
 	/**
 	Clear the timeout.
 	*/
 	clear: () => void;
-}
+} & Promise<T>;
 
 export type Options<ReturnType> = {
 	/**

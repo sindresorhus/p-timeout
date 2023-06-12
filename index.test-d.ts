@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable unicorn/prefer-top-level-await */
 import {expectType, expectError} from 'tsd';
 import pTimeout, {TimeoutError} from './index.js';
 
