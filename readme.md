@@ -164,7 +164,9 @@ Exposed for instance checking and sub-classing.
 
 > Modern alternative to `p-timeout`
 
-Asynchronous functions like `fetch` can accept an [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal), which can conveniently be created with [AbortSignal.timeout()](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static). The advantage over `p-timeout` is that the promise-generating function (like `fetch`) is actually notified that the user is no longer expecting an answer, so it can interrupt its work and free resources.
+Asynchronous functions like `fetch` can accept an [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal), which can be conveniently created with [AbortSignal.timeout()](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static).
+
+The advantage over `p-timeout` is that the promise-generating function (like `fetch`) is actually notified that the user is no longer expecting an answer, so it can interrupt its work and free resources.
 
 ```js
 // Call API, timeout after 5 seconds
@@ -184,3 +186,5 @@ async function buildWall(signal) {
 // Stop long work after 60 seconds
 await buildWall(AbortSignal.timeout(60_000))
 ```
+
+You can also [combine multiple signals](https://github.com/fregante/abort-utils/blob/main/source/merge-signals.md), like when you have a timeout _and_ an `AbortController` triggered with a Cancel button click.
