@@ -3,7 +3,7 @@
 > Timeout a promise after a specified amount of time
 
 > [!NOTE]
-> You might want to use `AbortSignal.timeout()` instead. [More info below](#abortsignal)
+> You may want to use `AbortSignal.timeout()` instead. [Learn more.](#abortsignal)
 
 ## Install
 
@@ -164,7 +164,7 @@ Exposed for instance checking and sub-classing.
 
 > Modern alternative to `p-timeout`
 
-Asynchronous functions like `fetch` can accept an [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal), which can be conveniently created with [AbortSignal.timeout()](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static).
+Asynchronous functions like `fetch` can accept an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal), which can be conveniently created with [`AbortSignal.timeout()`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal/timeout_static).
 
 The advantage over `p-timeout` is that the promise-generating function (like `fetch`) is actually notified that the user is no longer expecting an answer, so it can interrupt its work and free resources.
 
@@ -177,7 +177,7 @@ const response = await fetch('./my-api', {signal: AbortSignal.timeout(5000)});
 async function buildWall(signal) {
 	for (const brick of bricks) {
 		signal.throwIfAborted();
-		// Or: if (signal.aborted) return;
+		// Or: if (signal.aborted) { return; }
 
 		await layBrick();
 	}
@@ -187,4 +187,4 @@ async function buildWall(signal) {
 await buildWall(AbortSignal.timeout(60_000))
 ```
 
-You can also [combine multiple signals](https://github.com/fregante/abort-utils/blob/main/source/merge-signals.md), like when you have a timeout _and_ an `AbortController` triggered with a Cancel button click.
+You can also [combine multiple signals](https://github.com/fregante/abort-utils/blob/main/source/merge-signals.md), like when you have a timeout *and* an `AbortController` triggered with a “Cancel” button click.
