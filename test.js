@@ -3,6 +3,7 @@ import delay from 'delay';
 import PCancelable from 'p-cancelable';
 import inRange from 'in-range';
 import timeSpan from 'time-span';
+import sinon from 'sinon';
 import pTimeout, {TimeoutError} from './index.js';
 
 const fixture = Symbol('fixture');
@@ -142,5 +143,26 @@ if (globalThis.AbortController !== undefined) {
 		}), {
 			name: 'AbortError',
 		});
+	});
+
+	test('removes abort listener after promise settles', async t => {
+		const abortController = new AbortController();
+		const {signal} = abortController;
+
+		const addEventListenerSpy = sinon.spy(signal, 'addEventListener');
+		const removeEventListenerSpy = sinon.spy(signal, 'removeEventListener');
+
+		const promise = pTimeout(delay(50), {
+			milliseconds: 100,
+			signal,
+		});
+
+		await promise;
+
+		t.true(addEventListenerSpy.calledWith('abort'), 'addEventListener should be called with "abort"');
+		t.true(removeEventListenerSpy.calledWith('abort'), 'removeEventListener should be called with "abort"');
+
+		addEventListenerSpy.restore();
+		removeEventListenerSpy.restore();
 	});
 }

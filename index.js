@@ -56,8 +56,14 @@ export default function pTimeout(promise, options) {
 				reject(getAbortedReason(signal));
 			}
 
-			signal.addEventListener('abort', () => {
+			const abortHandler = () => {
 				reject(getAbortedReason(signal));
+			};
+
+			signal.addEventListener('abort', abortHandler, {once: true});
+
+			promise.finally(() => {
+				signal.removeEventListener('abort', abortHandler);
 			});
 		}
 
