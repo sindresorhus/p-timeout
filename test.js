@@ -165,4 +165,31 @@ if (globalThis.AbortController !== undefined) {
 		addEventListenerSpy.restore();
 		removeEventListenerSpy.restore();
 	});
+
+	test('removes abort listener after promise rejects', async t => {
+		const abortController = new AbortController();
+		const {signal} = abortController;
+
+		const addEventListenerSpy = sinon.spy(signal, 'addEventListener');
+		const removeEventListenerSpy = sinon.spy(signal, 'removeEventListener');
+
+		const promise = pTimeout(
+			(async () => {
+				await delay(50);
+				throw new Error('Test error');
+			})(),
+			{
+				milliseconds: 100,
+				signal,
+			},
+		);
+
+		await t.throwsAsync(promise, {message: 'Test error'});
+
+		t.true(addEventListenerSpy.calledWith('abort'), 'addEventListener should be called with "abort"');
+		t.true(removeEventListenerSpy.calledWith('abort'), 'removeEventListener should be called with "abort"');
+
+		addEventListenerSpy.restore();
+		removeEventListenerSpy.restore();
+	});
 }
