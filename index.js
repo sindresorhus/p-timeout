@@ -44,6 +44,7 @@ export default function pTimeout(promise, options) {
 	} = options;
 
 	let timer;
+	let abortHandler;
 
 	const wrappedPromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
@@ -56,15 +57,11 @@ export default function pTimeout(promise, options) {
 				reject(getAbortedReason(signal));
 			}
 
-			const abortHandler = () => {
+			abortHandler = () => {
 				reject(getAbortedReason(signal));
 			};
 
 			signal.addEventListener('abort', abortHandler, {once: true});
-
-			promise.finally(() => {
-				signal.removeEventListener('abort', abortHandler);
-			});
 		}
 
 		if (milliseconds === Number.POSITIVE_INFINITY) {
@@ -111,6 +108,9 @@ export default function pTimeout(promise, options) {
 
 	const cancelablePromise = wrappedPromise.finally(() => {
 		cancelablePromise.clear();
+		if (abortHandler && options.signal) {
+			options.signal.removeEventListener('abort', abortHandler);
+		}
 	});
 
 	cancelablePromise.clear = () => {
