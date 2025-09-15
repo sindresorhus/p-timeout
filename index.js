@@ -97,13 +97,7 @@ export default function pTimeout(promise, options) {
 			}
 		}, milliseconds);
 
-		(async () => {
-			try {
-				resolve(await promise);
-			} catch (error) {
-				reject(error);
-			}
-		})();
+		promise.then(resolve, reject);
 	});
 
 	const cancelablePromise = wrappedPromise.finally(() => {

@@ -193,3 +193,23 @@ if (globalThis.AbortController !== undefined) {
 		removeEventListenerSpy.restore();
 	});
 }
+
+const createRejectingPromise = async () => {
+	await delay(1);
+	throw new Error('test error for stack trace');
+};
+
+const wrapperFunction = async () => {
+	await pTimeout(createRejectingPromise(), {milliseconds: 100});
+};
+
+test('preserves stack trace when promise rejects', async t => {
+	try {
+		await wrapperFunction();
+		t.fail('Should have thrown');
+	} catch (error) {
+		t.is(error.message, 'test error for stack trace');
+		// Stack trace should include the wrapperFunction call
+		t.true(error.stack.includes('wrapperFunction'));
+	}
+});
