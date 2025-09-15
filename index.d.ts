@@ -1,6 +1,6 @@
 export class TimeoutError extends Error {
 	readonly name: 'TimeoutError';
-	constructor(message?: string);
+	constructor(message?: string, options?: ErrorOptions);
 }
 
 export type ClearablePromise<T> = {
@@ -92,9 +92,7 @@ export type Options<ReturnType> = {
 	};
 
 	/**
-	You can abort the promise using [`AbortController`](https://developer.mozilla.org/en-US/docs/Web/API/AbortController).
-
-	_Requires Node.js 16 or later._
+	Abort the promise.
 
 	@example
 	```

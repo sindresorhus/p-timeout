@@ -1,39 +1,13 @@
 export class TimeoutError extends Error {
-	constructor(message) {
-		super(message);
-		this.name = 'TimeoutError';
+	name = 'TimeoutError';
+
+	constructor(message, options) {
+		super(message, options);
+		Error.captureStackTrace?.(this, TimeoutError);
 	}
 }
 
-/**
-An error to be thrown when the request is aborted by AbortController.
-DOMException is thrown instead of this Error when DOMException is available.
-*/
-export class AbortError extends Error {
-	constructor(message) {
-		super();
-		this.name = 'AbortError';
-		this.message = message;
-	}
-}
-
-/**
-TODO: Remove AbortError and just throw DOMException when targeting Node 18.
-*/
-const getDOMException = errorMessage => globalThis.DOMException === undefined
-	? new AbortError(errorMessage)
-	: new DOMException(errorMessage);
-
-/**
-TODO: Remove below function and just 'reject(signal.reason)' when targeting Node 18.
-*/
-const getAbortedReason = signal => {
-	const reason = signal.reason === undefined
-		? getDOMException('This operation was aborted.')
-		: signal.reason;
-
-	return reason instanceof Error ? reason : getDOMException(reason);
-};
+const getAbortedReason = signal => signal.reason ?? new DOMException('This operation was aborted.', 'AbortError');
 
 export default function pTimeout(promise, options) {
 	const {
@@ -41,6 +15,7 @@ export default function pTimeout(promise, options) {
 		fallback,
 		message,
 		customTimers = {setTimeout, clearTimeout},
+		signal,
 	} = options;
 
 	let timer;
@@ -51,12 +26,12 @@ export default function pTimeout(promise, options) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
 		}
 
-		if (options.signal) {
-			const {signal} = options;
-			if (signal.aborted) {
-				reject(getAbortedReason(signal));
-			}
+		if (signal?.aborted) {
+			reject(getAbortedReason(signal));
+			return;
+		}
 
+		if (signal) {
 			abortHandler = () => {
 				reject(getAbortedReason(signal));
 			};
@@ -64,15 +39,18 @@ export default function pTimeout(promise, options) {
 			signal.addEventListener('abort', abortHandler, {once: true});
 		}
 
+		// Use .then() instead of async IIFE to preserve stack traces
+		// eslint-disable-next-line promise/prefer-await-to-then, promise/prefer-catch
+		promise.then(resolve, reject);
+
 		if (milliseconds === Number.POSITIVE_INFINITY) {
-			promise.then(resolve, reject);
 			return;
 		}
 
 		// We create the error outside of `setTimeout` to preserve the stack trace.
 		const timeoutError = new TimeoutError();
 
-		timer = customTimers.setTimeout.call(undefined, () => {
+		timer = customTimers.setTimeout(() => {
 			if (fallback) {
 				try {
 					resolve(fallback());
@@ -96,19 +74,18 @@ export default function pTimeout(promise, options) {
 				reject(timeoutError);
 			}
 		}, milliseconds);
-
-		promise.then(resolve, reject);
 	});
 
+	// eslint-disable-next-line promise/prefer-await-to-then
 	const cancelablePromise = wrappedPromise.finally(() => {
 		cancelablePromise.clear();
-		if (abortHandler && options.signal) {
-			options.signal.removeEventListener('abort', abortHandler);
+		if (abortHandler && signal) {
+			signal.removeEventListener('abort', abortHandler);
 		}
 	});
 
 	cancelablePromise.clear = () => {
-		customTimers.clearTimeout.call(undefined, timer);
+		customTimers.clearTimeout(timer);
 		timer = undefined;
 	};
 

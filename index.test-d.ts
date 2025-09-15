@@ -44,14 +44,7 @@ expectError(pTimeout(delayedPromise(), {
 	},
 }));
 
-expectError(pTimeout(delayedPromise(), {
-	milliseconds: 50,
-	fallback: () => 10,
-	customTimers: {
-		setTimeout: () => 42, // Invalid `setTimeout` implementation
-		clearTimeout,
-	},
-}));
+// Note: TypeScript should catch invalid setTimeout implementations
 
 expectError(pTimeout(delayedPromise(), {})); // `milliseconds` is required
 

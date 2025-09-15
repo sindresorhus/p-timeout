@@ -10,7 +10,7 @@ const fixture = Symbol('fixture');
 const fixtureError = new Error('fixture');
 
 test('resolves before timeout', async t => {
-	t.is(await pTimeout(delay(50).then(() => fixture), {milliseconds: 200}), fixture);
+	t.is(await pTimeout(delay(50, {value: fixture}), {milliseconds: 200}), fixture);
 });
 
 test('throws when milliseconds is not number', async t => {
@@ -44,18 +44,24 @@ test('resolves after timeout with message:false', async t => {
 });
 
 test('rejects before timeout if specified promise rejects', async t => {
-	await t.throwsAsync(pTimeout(delay(50).then(() => {
+	const rejectingPromise = async () => {
+		await delay(50);
 		throw fixtureError;
-	}), {milliseconds: 200}), {message: fixtureError.message});
+	};
+
+	await t.throwsAsync(pTimeout(rejectingPromise(), {milliseconds: 200}), {message: fixtureError.message});
 });
 
 test('fallback argument', async t => {
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: 'rainbow'}), {message: 'rainbow'});
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: new RangeError('cake')}), {instanceOf: RangeError});
 	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback: () => Promise.reject(fixtureError)}), {message: fixtureError.message});
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback() {
-		throw new RangeError('cake');
-	}}), {instanceOf: RangeError});
+	await t.throwsAsync(pTimeout(delay(200), {
+		milliseconds: 50,
+		fallback() {
+			throw new RangeError('cake');
+		},
+	}), {instanceOf: RangeError});
 });
 
 test('calls `.cancel()` on promise when it exists', async t => {
@@ -100,99 +106,119 @@ test('`.clear()` method', async t => {
 	t.true(inRange(end(), {start: 0, end: 350}));
 });
 
-/**
-TODO: Remove if statement when targeting Node.js 16.
-*/
-if (globalThis.AbortController !== undefined) {
-	test('rejects when calling `AbortController#abort()`', async t => {
-		const abortController = new AbortController();
+test('`.clear()` method can be called multiple times', async t => {
+	const promise = pTimeout(delay(50, {value: fixture}), {milliseconds: 200});
 
-		const promise = pTimeout(delay(3000), {
-			milliseconds: 2000,
-			signal: abortController.signal,
-		});
+	promise.clear();
+	promise.clear(); // Should not throw
 
-		abortController.abort();
+	t.is(await promise, fixture);
+});
 
-		await t.throwsAsync(promise, {
-			name: 'AbortError',
-		});
+test('fallback resolves successfully', async t => {
+	const result = await pTimeout(delay(200), {
+		milliseconds: 50,
+		fallback: () => 'fallback result',
 	});
 
-	test('already aborted signal', async t => {
-		const abortController = new AbortController();
+	t.is(result, 'fallback result');
+});
 
-		abortController.abort();
+// AbortController tests
+test('rejects when calling `AbortController#abort()`', async t => {
+	const abortController = new AbortController();
 
-		await t.throwsAsync(pTimeout(delay(3000), {
-			milliseconds: 2000,
-			signal: abortController.signal,
-		}), {
-			name: 'AbortError',
-		});
+	const promise = pTimeout(delay(3000), {
+		milliseconds: 2000,
+		signal: abortController.signal,
 	});
 
-	test('aborts even if milliseconds are set to infinity', async t => {
-		const abortController = new AbortController();
+	abortController.abort();
 
-		abortController.abort();
-
-		await t.throwsAsync(pTimeout(delay(3000), {
-			milliseconds: Number.POSITIVE_INFINITY,
-			signal: abortController.signal,
-		}), {
-			name: 'AbortError',
-		});
-	});
-
-	test('removes abort listener after promise settles', async t => {
-		const abortController = new AbortController();
-		const {signal} = abortController;
-
-		const addEventListenerSpy = sinon.spy(signal, 'addEventListener');
-		const removeEventListenerSpy = sinon.spy(signal, 'removeEventListener');
-
-		const promise = pTimeout(delay(50), {
-			milliseconds: 100,
-			signal,
-		});
-
+	try {
 		await promise;
+		t.fail('Should have thrown');
+	} catch (error) {
+		t.is(error.name, 'AbortError');
+		t.true(error instanceof DOMException);
+	}
+});
 
-		t.true(addEventListenerSpy.calledWith('abort'), 'addEventListener should be called with "abort"');
-		t.true(removeEventListenerSpy.calledWith('abort'), 'removeEventListener should be called with "abort"');
+test('already aborted signal', async t => {
+	const abortController = new AbortController();
 
-		addEventListenerSpy.restore();
-		removeEventListenerSpy.restore();
+	abortController.abort();
+
+	const promise = pTimeout(delay(3000), {
+		milliseconds: 2000,
+		signal: abortController.signal,
 	});
 
-	test('removes abort listener after promise rejects', async t => {
-		const abortController = new AbortController();
-		const {signal} = abortController;
+	try {
+		await promise;
+		t.fail('Should have thrown');
+	} catch (error) {
+		t.is(error.name, 'AbortError');
+		t.true(error instanceof DOMException);
+	}
+});
 
-		const addEventListenerSpy = sinon.spy(signal, 'addEventListener');
-		const removeEventListenerSpy = sinon.spy(signal, 'removeEventListener');
+test('aborts even if milliseconds are set to infinity', async t => {
+	const abortController = new AbortController();
 
-		const promise = pTimeout(
-			(async () => {
-				await delay(50);
-				throw new Error('Test error');
-			})(),
-			{
-				milliseconds: 100,
-				signal,
-			},
-		);
+	abortController.abort();
 
-		await t.throwsAsync(promise, {message: 'Test error'});
-
-		t.true(addEventListenerSpy.calledWith('abort'), 'addEventListener should be called with "abort"');
-		t.true(removeEventListenerSpy.calledWith('abort'), 'removeEventListener should be called with "abort"');
-
-		addEventListenerSpy.restore();
-		removeEventListenerSpy.restore();
+	const promise = pTimeout(delay(3000), {
+		milliseconds: Number.POSITIVE_INFINITY,
+		signal: abortController.signal,
 	});
-}
+
+	try {
+		await promise;
+		t.fail('Should have thrown');
+	} catch (error) {
+		t.is(error.name, 'AbortError');
+		t.true(error instanceof DOMException);
+	}
+});
+
+const testAbortListenerCleanup = async (t, promiseFactory) => {
+	const abortController = new AbortController();
+	const {signal} = abortController;
+
+	const addEventListenerSpy = sinon.spy(signal, 'addEventListener');
+	const removeEventListenerSpy = sinon.spy(signal, 'removeEventListener');
+
+	const promise = pTimeout(promiseFactory(), {
+		milliseconds: 100,
+		signal,
+	});
+
+	try {
+		await promise;
+	} catch {
+		// Ignore promise rejections
+	}
+
+	t.true(addEventListenerSpy.calledWith('abort'), 'addEventListener should be called with "abort"');
+	t.true(removeEventListenerSpy.calledWith('abort'), 'removeEventListener should be called with "abort"');
+
+	addEventListenerSpy.restore();
+	removeEventListenerSpy.restore();
+};
+
+test('removes abort listener after promise settles', async t => {
+	await testAbortListenerCleanup(t, () => delay(50));
+});
+
+test('removes abort listener after promise rejects', async t => {
+	const rejectingPromise = async () => {
+		await delay(50);
+		throw new Error('Test error');
+	};
+
+	await testAbortListenerCleanup(t, rejectingPromise);
+});
 
 const createRejectingPromise = async () => {
 	await delay(1);

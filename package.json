@@ -11,11 +11,13 @@
 		"url": "https://sindresorhus.com"
 	},
 	"type": "module",
-	"exports": "./index.js",
-	"types": "./index.d.ts",
+	"exports": {
+		"types": "./index.d.ts",
+		"default": "./index.js"
+	},
 	"sideEffects": false,
 	"engines": {
-		"node": ">=14.16"
+		"node": ">=20"
 	},
 	"scripts": {
 		"test": "xo && ava && tsd"
@@ -38,13 +40,13 @@
 		"bluebird"
 	],
 	"devDependencies": {
-		"ava": "^4.3.1",
-		"delay": "^5.0.0",
+		"ava": "^6.4.1",
+		"delay": "^6.0.0",
 		"in-range": "^3.0.0",
 		"p-cancelable": "^4.0.1",
-		"sinon": "^19.0.2",
+		"sinon": "^21.0.0",
 		"time-span": "^5.1.0",
-		"tsd": "^0.22.0",
-		"xo": "^0.54.2"
+		"tsd": "^0.33.0",
+		"xo": "^1.2.2"
 	}
 }
