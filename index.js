@@ -50,7 +50,8 @@ export default function pTimeout(promise, options) {
 		// We create the error outside of `setTimeout` to preserve the stack trace.
 		const timeoutError = new TimeoutError();
 
-		timer = customTimers.setTimeout(() => {
+		// `.call(undefined, ...)` is needed for custom timers to avoid context issues
+		timer = customTimers.setTimeout.call(undefined, () => {
 			if (fallback) {
 				try {
 					resolve(fallback());
@@ -85,7 +86,8 @@ export default function pTimeout(promise, options) {
 	});
 
 	cancelablePromise.clear = () => {
-		customTimers.clearTimeout(timer);
+		// `.call(undefined, ...)` is needed for custom timers to avoid context issues
+		customTimers.clearTimeout.call(undefined, timer);
 		timer = undefined;
 	};
 
