@@ -28,6 +28,9 @@ export default function pTimeout(promise, options) {
 
 		if (signal?.aborted) {
 			reject(getAbortedReason(signal));
+			// The input still needs a rejection handler even though cancellation won.
+			// eslint-disable-next-line promise/prefer-await-to-then, promise/prefer-catch
+			promise.then(resolve, reject);
 			return;
 		}
 
