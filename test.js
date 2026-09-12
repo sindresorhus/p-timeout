@@ -1,3 +1,6 @@
+import process from 'node:process';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 import test from 'ava';
 import delay from 'delay';
 import PCancelable from 'p-cancelable';
@@ -238,4 +241,28 @@ test('preserves stack trace when promise rejects', async t => {
 		// Stack trace should include the wrapperFunction call
 		t.true(error.stack.includes('wrapperFunction'));
 	}
+});
+
+test('already aborted signal observes input rejections', async t => {
+	const {stdout} = await promisify(execFile)(process.execPath, [
+		'--unhandled-rejections=strict',
+		'--input-type=module',
+		'--eval',
+		`
+			import assert from 'node:assert/strict';
+			import pTimeout from ${JSON.stringify(new URL('index.js', import.meta.url).href)};
+			const reason = new Error('cancelled');
+			const signal = AbortSignal.abort(reason);
+			for (const milliseconds of [10, Infinity]) {
+				await assert.rejects(pTimeout(Promise.reject(new Error('input failed')), {
+					milliseconds,
+					signal,
+				}), error => error === reason);
+			}
+			await new Promise(resolve => setImmediate(resolve));
+			console.log('handled');
+		`,
+	]);
+
+	t.is(stdout.trim(), 'handled');
 });
