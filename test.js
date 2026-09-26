@@ -266,3 +266,21 @@ test('already aborted signal observes input rejections', async t => {
 
 	t.is(stdout.trim(), 'handled');
 });
+
+test('an infinite timeout settles even with custom timers', async t => {
+	// The early return correctly skips creating a timer, but `clear()` then called `clearTimeout(undefined)`, and a
+	// throw from inside `finally` replaced the settled value.
+	const customTimers = {
+		setTimeout() {
+			throw new Error('should never be called');
+		},
+		clearTimeout(token) {
+			if (token === undefined) {
+				throw new TypeError('clearTimeout called with undefined');
+			}
+		},
+	};
+
+	t.is(await pTimeout(Promise.resolve('done'), {milliseconds: Number.POSITIVE_INFINITY, customTimers}), 'done');
+	await t.throwsAsync(pTimeout(Promise.reject(new Error('inner')), {milliseconds: Number.POSITIVE_INFINITY, customTimers}), {message: 'inner'});
+});

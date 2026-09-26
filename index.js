@@ -89,6 +89,11 @@ export default function pTimeout(promise, options) {
 	});
 
 	cancelablePromise.clear = () => {
+		// An infinite timeout never creates one, and a custom `clearTimeout` is entitled to reject `undefined`.
+		if (timer === undefined) {
+			return;
+		}
+
 		// `.call(undefined, ...)` is needed for custom timers to avoid context issues
 		customTimers.clearTimeout.call(undefined, timer);
 		timer = undefined;
