@@ -5,22 +5,20 @@
 	"license": "MIT",
 	"repository": "sindresorhus/p-timeout",
 	"funding": "https://github.com/sponsors/sindresorhus",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "https://sindresorhus.com"
-	},
+	"author": "Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)",
 	"type": "module",
 	"exports": {
-		"types": "./index.d.ts",
-		"default": "./index.js"
+		".": {
+			"types": "./index.d.ts",
+			"default": "./index.js"
+		}
 	},
 	"sideEffects": false,
 	"engines": {
-		"node": ">=20"
+		"node": ">=22"
 	},
 	"scripts": {
-		"test": "xo && ava && tsd"
+		"test": "xo && node --test && tsd"
 	},
 	"files": [
 		"index.js",
@@ -40,13 +38,19 @@
 		"bluebird"
 	],
 	"devDependencies": {
-		"ava": "^6.4.1",
-		"delay": "^6.0.0",
+		"delay": "^7.0.0",
 		"in-range": "^3.0.0",
 		"p-cancelable": "^4.0.1",
-		"sinon": "^21.0.0",
+		"sinon": "^22.1.0",
 		"time-span": "^5.1.0",
 		"tsd": "^0.33.0",
-		"xo": "^1.2.2"
-	}
+		"xo": "^5.0.1"
+	},
+	"xo": [
+		{
+			"rules": {
+				"node-test/prefer-test-context-assert": "off"
+			}
+		}
+	]
 }

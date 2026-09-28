@@ -1,7 +1,8 @@
 import process from 'node:process';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
-import test from 'ava';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
 import delay from 'delay';
 import PCancelable from 'p-cancelable';
 import inRange from 'in-range';
@@ -12,123 +13,139 @@ import pTimeout, {TimeoutError} from './index.js';
 const fixture = Symbol('fixture');
 const fixtureError = new Error('fixture');
 
-test('resolves before timeout', async t => {
-	t.is(await pTimeout(delay(50, {value: fixture}), {milliseconds: 200}), fixture);
+const captureRejection = async promise => {
+	try {
+		await promise;
+	} catch (error) {
+		return error;
+	}
+
+	return undefined;
+};
+
+test('resolves before timeout', async () => {
+	assert.strictEqual(await pTimeout(delay(50, {value: fixture}), {milliseconds: 200}), fixture);
 });
 
-test('throws when milliseconds is not number', async t => {
-	await t.throwsAsync(pTimeout(delay(50), {milliseconds: '200'}), {instanceOf: TypeError});
+test('throws when milliseconds is not number', async () => {
+	await assert.rejects(pTimeout(delay(50), {milliseconds: '200'}), TypeError);
 });
 
-test('throws when milliseconds is negative number', async t => {
-	await t.throwsAsync(pTimeout(delay(50), {milliseconds: -1}), {instanceOf: TypeError});
+test('throws when milliseconds is negative number', async () => {
+	await assert.rejects(pTimeout(delay(50), {milliseconds: -1}), TypeError);
 });
 
-test('throws when milliseconds is NaN', async t => {
-	await t.throwsAsync(pTimeout(delay(50), {milliseconds: Number.NaN}), {instanceOf: TypeError});
+test('throws when milliseconds is NaN', async () => {
+	await assert.rejects(pTimeout(delay(50), {milliseconds: NaN}), TypeError);
 });
 
-test('handles milliseconds being `Infinity`', async t => {
-	t.is(
-		await pTimeout(delay(50, {value: fixture}), {milliseconds: Number.POSITIVE_INFINITY}),
+test('handles milliseconds being `Infinity`', async () => {
+	assert.strictEqual(
+		await pTimeout(delay(50, {value: fixture}), {milliseconds: Infinity}),
 		fixture,
 	);
 });
 
-test('rejects after timeout', async t => {
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50}), {instanceOf: TimeoutError});
+test('rejects after timeout', async () => {
+	await assert.rejects(pTimeout(delay(200), {milliseconds: 50}), TimeoutError);
 });
 
-test('resolves after timeout with message:false', async t => {
-	t.is(
+test('resolves after timeout with message:false', async () => {
+	assert.strictEqual(
 		await pTimeout(delay(200), {milliseconds: 50, message: false}),
 		undefined,
 	);
 });
 
-test('rejects before timeout if specified promise rejects', async t => {
+test('rejects before timeout if specified promise rejects', async () => {
 	const rejectingPromise = async () => {
 		await delay(50);
 		throw fixtureError;
 	};
 
-	await t.throwsAsync(pTimeout(rejectingPromise(), {milliseconds: 200}), {message: fixtureError.message});
+	await assert.rejects(pTimeout(rejectingPromise(), {milliseconds: 200}), {message: fixtureError.message});
 });
 
-test('fallback argument', async t => {
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: 'rainbow'}), {message: 'rainbow'});
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, message: new RangeError('cake')}), {instanceOf: RangeError});
-	await t.throwsAsync(pTimeout(delay(200), {milliseconds: 50, fallback: () => Promise.reject(fixtureError)}), {message: fixtureError.message});
-	await t.throwsAsync(pTimeout(delay(200), {
+test('fallback argument', async () => {
+	await assert.rejects(pTimeout(delay(200), {milliseconds: 50, message: 'rainbow'}), {message: 'rainbow'});
+	await assert.rejects(pTimeout(delay(200), {milliseconds: 50, message: new RangeError('cake')}), RangeError);
+	await assert.rejects(pTimeout(delay(200), {milliseconds: 50, fallback: () => Promise.reject(fixtureError)}), {message: fixtureError.message});
+	await assert.rejects(pTimeout(delay(200), {
 		milliseconds: 50,
 		fallback() {
 			throw new RangeError('cake');
 		},
-	}), {instanceOf: RangeError});
+	}), RangeError);
 });
 
-test('calls `.cancel()` on promise when it exists', async t => {
+test('calls `.cancel()` on promise when it exists', async () => {
+	let didCancel = false;
 	const promise = new PCancelable(async (resolve, reject, onCancel) => {
 		onCancel(() => {
-			t.pass();
+			didCancel = true;
 		});
 
 		await delay(200);
 		resolve();
 	});
 
-	await t.throwsAsync(pTimeout(promise, {milliseconds: 50}), {instanceOf: TimeoutError});
-	t.true(promise.isCanceled);
+	await assert.rejects(pTimeout(promise, {milliseconds: 50}), TimeoutError);
+	assert.ok(didCancel, '`.cancel()` should have been called on the promise');
+	assert.ok(promise.isCanceled);
 });
 
-test('accepts `customTimers` option', async t => {
-	t.plan(2);
+test('accepts `customTimers` option', async () => {
+	const requestedDelays = [];
+	let didClear = false;
 
 	await pTimeout(delay(50), {
 		milliseconds: 123,
 		customTimers: {
 			setTimeout(fn, milliseconds) {
-				t.is(milliseconds, 123);
+				requestedDelays.push(milliseconds);
 				return setTimeout(fn, milliseconds);
 			},
 			clearTimeout(timeoutId) {
-				t.pass();
+				didClear = true;
 				return clearTimeout(timeoutId);
 			},
 		},
 	});
+
+	assert.deepEqual(requestedDelays, [123]);
+	assert.ok(didClear, '`clearTimeout` should have been called once the promise settled');
 });
 
-test('`.clear()` method', async t => {
+test('`.clear()` method', async () => {
 	const end = timeSpan();
 	const promise = pTimeout(delay(300), {milliseconds: 200});
 
 	promise.clear();
 
 	await promise;
-	t.true(inRange(end(), {start: 0, end: 350}));
+	assert.ok(inRange(end(), {start: 0, end: 350}));
 });
 
-test('`.clear()` method can be called multiple times', async t => {
+test('`.clear()` method can be called multiple times', async () => {
 	const promise = pTimeout(delay(50, {value: fixture}), {milliseconds: 200});
 
 	promise.clear();
 	promise.clear(); // Should not throw
 
-	t.is(await promise, fixture);
+	assert.strictEqual(await promise, fixture);
 });
 
-test('fallback resolves successfully', async t => {
+test('fallback resolves successfully', async () => {
 	const result = await pTimeout(delay(200), {
 		milliseconds: 50,
 		fallback: () => 'fallback result',
 	});
 
-	t.is(result, 'fallback result');
+	assert.strictEqual(result, 'fallback result');
 });
 
 // AbortController tests
-test('rejects when calling `AbortController#abort()`', async t => {
+test('rejects when calling `AbortController#abort()`', async () => {
 	const abortController = new AbortController();
 
 	const promise = pTimeout(delay(3000), {
@@ -138,16 +155,12 @@ test('rejects when calling `AbortController#abort()`', async t => {
 
 	abortController.abort();
 
-	try {
-		await promise;
-		t.fail('Should have thrown');
-	} catch (error) {
-		t.is(error.name, 'AbortError');
-		t.true(error instanceof DOMException);
-	}
+	const error = await captureRejection(promise);
+	assert.strictEqual(error?.name, 'AbortError');
+	assert.ok(error instanceof DOMException);
 });
 
-test('already aborted signal', async t => {
+test('already aborted signal', async () => {
 	const abortController = new AbortController();
 
 	abortController.abort();
@@ -157,35 +170,27 @@ test('already aborted signal', async t => {
 		signal: abortController.signal,
 	});
 
-	try {
-		await promise;
-		t.fail('Should have thrown');
-	} catch (error) {
-		t.is(error.name, 'AbortError');
-		t.true(error instanceof DOMException);
-	}
+	const error = await captureRejection(promise);
+	assert.strictEqual(error?.name, 'AbortError');
+	assert.ok(error instanceof DOMException);
 });
 
-test('aborts even if milliseconds are set to infinity', async t => {
+test('aborts even if milliseconds are set to infinity', async () => {
 	const abortController = new AbortController();
 
 	abortController.abort();
 
 	const promise = pTimeout(delay(3000), {
-		milliseconds: Number.POSITIVE_INFINITY,
+		milliseconds: Infinity,
 		signal: abortController.signal,
 	});
 
-	try {
-		await promise;
-		t.fail('Should have thrown');
-	} catch (error) {
-		t.is(error.name, 'AbortError');
-		t.true(error instanceof DOMException);
-	}
+	const error = await captureRejection(promise);
+	assert.strictEqual(error?.name, 'AbortError');
+	assert.ok(error instanceof DOMException);
 });
 
-const testAbortListenerCleanup = async (t, promiseFactory) => {
+const testAbortListenerCleanup = async promiseFactory => {
 	const abortController = new AbortController();
 	const {signal} = abortController;
 
@@ -203,24 +208,27 @@ const testAbortListenerCleanup = async (t, promiseFactory) => {
 		// Ignore promise rejections
 	}
 
-	t.true(addEventListenerSpy.calledWith('abort'), 'addEventListener should be called with "abort"');
-	t.true(removeEventListenerSpy.calledWith('abort'), 'removeEventListener should be called with "abort"');
-
 	addEventListenerSpy.restore();
 	removeEventListenerSpy.restore();
+
+	return [addEventListenerSpy.calledWith('abort'), removeEventListenerSpy.calledWith('abort')];
 };
 
-test('removes abort listener after promise settles', async t => {
-	await testAbortListenerCleanup(t, () => delay(50));
+test('removes abort listener after promise settles', async () => {
+	const [wasAdded, wasRemoved] = await testAbortListenerCleanup(() => delay(50));
+	assert.ok(wasAdded, 'addEventListener should be called with "abort"');
+	assert.ok(wasRemoved, 'removeEventListener should be called with "abort"');
 });
 
-test('removes abort listener after promise rejects', async t => {
+test('removes abort listener after promise rejects', async () => {
 	const rejectingPromise = async () => {
 		await delay(50);
 		throw new Error('Test error');
 	};
 
-	await testAbortListenerCleanup(t, rejectingPromise);
+	const [wasAdded, wasRemoved] = await testAbortListenerCleanup(rejectingPromise);
+	assert.ok(wasAdded, 'addEventListener should be called with "abort"');
+	assert.ok(wasRemoved, 'removeEventListener should be called with "abort"');
 });
 
 const createRejectingPromise = async () => {
@@ -232,18 +240,16 @@ const wrapperFunction = async () => {
 	await pTimeout(createRejectingPromise(), {milliseconds: 100});
 };
 
-test('preserves stack trace when promise rejects', async t => {
-	try {
-		await wrapperFunction();
-		t.fail('Should have thrown');
-	} catch (error) {
-		t.is(error.message, 'test error for stack trace');
+test('preserves stack trace when promise rejects', async () => {
+	await assert.rejects(wrapperFunction(), error => {
+		assert.strictEqual(error.message, 'test error for stack trace');
 		// Stack trace should include the wrapperFunction call
-		t.true(error.stack.includes('wrapperFunction'));
-	}
+		assert.ok(error.stack?.includes('wrapperFunction'));
+		return true;
+	});
 });
 
-test('already aborted signal observes input rejections', async t => {
+test('already aborted signal observes input rejections', async () => {
 	const {stdout} = await promisify(execFile)(process.execPath, [
 		'--unhandled-rejections=strict',
 		'--input-type=module',
@@ -264,10 +270,10 @@ test('already aborted signal observes input rejections', async t => {
 		`,
 	]);
 
-	t.is(stdout.trim(), 'handled');
+	assert.strictEqual(stdout.trim(), 'handled');
 });
 
-test('an infinite timeout settles even with custom timers', async t => {
+test('an infinite timeout settles even with custom timers', async () => {
 	// The early return correctly skips creating a timer, but `clear()` then called `clearTimeout(undefined)`, and a
 	// throw from inside `finally` replaced the settled value.
 	const customTimers = {
@@ -281,6 +287,9 @@ test('an infinite timeout settles even with custom timers', async t => {
 		},
 	};
 
-	t.is(await pTimeout(Promise.resolve('done'), {milliseconds: Number.POSITIVE_INFINITY, customTimers}), 'done');
-	await t.throwsAsync(pTimeout(Promise.reject(new Error('inner')), {milliseconds: Number.POSITIVE_INFINITY, customTimers}), {message: 'inner'});
+	const settled = pTimeout(Promise.resolve('done'), {milliseconds: Infinity, customTimers});
+	assert.strictEqual(await settled, 'done');
+
+	const rejected = pTimeout(Promise.reject(new Error('inner')), {milliseconds: Infinity, customTimers});
+	await assert.rejects(rejected, {message: 'inner'});
 });

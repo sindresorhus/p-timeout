@@ -3,6 +3,8 @@ export class TimeoutError extends Error {
 
 	constructor(message, options) {
 		super(message, options);
+		// V8-only, and it does exactly one thing here: it hides this constructor frame from the stack.
+		// eslint-disable-next-line unicorn/no-useless-error-capture-stack-trace, unicorn/no-nonstandard-builtin-properties
 		Error.captureStackTrace?.(this, TimeoutError);
 	}
 }
@@ -29,7 +31,7 @@ export default function pTimeout(promise, options) {
 		if (signal?.aborted) {
 			reject(getAbortedReason(signal));
 			// The input still needs a rejection handler even though cancellation won.
-			// eslint-disable-next-line promise/prefer-await-to-then, promise/prefer-catch
+			// eslint-disable-next-line unicorn/prefer-then-catch
 			promise.then(resolve, reject);
 			return;
 		}
@@ -43,10 +45,10 @@ export default function pTimeout(promise, options) {
 		}
 
 		// Use .then() instead of async IIFE to preserve stack traces
-		// eslint-disable-next-line promise/prefer-await-to-then, promise/prefer-catch
+		// eslint-disable-next-line unicorn/prefer-then-catch
 		promise.then(resolve, reject);
 
-		if (milliseconds === Number.POSITIVE_INFINITY) {
+		if (milliseconds === Infinity) {
 			return;
 		}
 
@@ -80,7 +82,6 @@ export default function pTimeout(promise, options) {
 		}, milliseconds);
 	});
 
-	// eslint-disable-next-line promise/prefer-await-to-then
 	const cancelablePromise = wrappedPromise.finally(() => {
 		cancelablePromise.clear();
 		if (abortHandler && signal) {

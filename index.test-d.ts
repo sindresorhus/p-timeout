@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
-/* eslint-disable unicorn/prefer-top-level-await */
+/* eslint-disable @typescript-eslint/no-floating-promises -- the type-level calls below are the assertions */
+/* eslint-disable unicorn/prefer-top-level-await -- a type test cannot await at the top level */
 import {expectType, expectError} from 'tsd';
 import pTimeout, {TimeoutError} from './index.js';
 
