@@ -107,9 +107,21 @@ export default function pTimeout(promise, options) {
 	});
 
 	const cancelablePromise = wrappedPromise.finally(() => {
-		cancelablePromise.clear();
-		if (abortHandler && signal) {
-			signal.removeEventListener('abort', abortHandler);
+		// This cleanup runs after the promise has already settled, so neither step may change the outcome, and
+		// neither may stop the other: a `clearTimeout` that throws must not leave the abort listener attached.
+		try {
+			cancelablePromise.clear();
+		} catch {
+			// Ignored: the result has already been decided, and a failed cleanup cannot un-decide it. The timer
+			// handle is deliberately left in place so an explicit `clear()` can still retry.
+		}
+
+		try {
+			if (abortHandler) {
+				signal.removeEventListener('abort', abortHandler);
+			}
+		} catch {
+			// Ignored, for the same reason.
 		}
 	});
 

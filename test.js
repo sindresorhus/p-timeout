@@ -176,6 +176,71 @@ test('accepts `customTimers` option', async () => {
 	assert.ok(didClear, '`clearTimeout` should have been called once the promise settled');
 });
 
+test('a throwing `removeEventListener` does not change the outcome', async () => {
+	// The same cleanup path, so a misbehaving signal must not be able to corrupt the settled result either.
+	const signal = {
+		aborted: false,
+		addEventListener() {},
+		removeEventListener() {
+			throw new Error('`removeEventListener` blew up');
+		},
+	};
+
+	assert.strictEqual(await pTimeout(Promise.resolve(fixture), {milliseconds: 100, signal}), fixture);
+	await assert.rejects(
+		pTimeout(Promise.reject(fixtureError), {milliseconds: 100, signal}),
+		{message: fixtureError.message},
+	);
+});
+
+const throwingClearTimers = {
+	setTimeout,
+	clearTimeout() {
+		throw new Error('`clearTimeout` blew up');
+	},
+};
+
+test('a throwing `clearTimeout` does not change the outcome', async () => {
+	// `clear()` runs from a `finally` callback, so a throw used to replace the already-settled value with the
+	// `clearTimeout` error.
+	const resolved = pTimeout(Promise.resolve(fixture), {milliseconds: 100, customTimers: throwingClearTimers});
+	assert.strictEqual(await resolved, fixture);
+
+	const rejected = pTimeout(Promise.reject(fixtureError), {milliseconds: 100, customTimers: throwingClearTimers});
+	await assert.rejects(rejected, {message: fixtureError.message});
+});
+
+test('a throwing `clearTimeout` does not skip removing the abort listener', async () => {
+	// Both cleanup steps have to run even when the first one fails, or the signal keeps holding the handler,
+	// which is the listener leak from issue 42 all over again.
+	const controller = new AbortController();
+	const removeEventListenerSpy = sinon.spy(controller.signal, 'removeEventListener');
+
+	try {
+		await pTimeout(Promise.resolve(fixture), {
+			milliseconds: 100,
+			signal: controller.signal,
+			customTimers: throwingClearTimers,
+		});
+	} finally {
+		removeEventListenerSpy.restore();
+	}
+
+	assert.ok(removeEventListenerSpy.calledWith('abort'), 'the abort listener must still be removed');
+});
+
+test('a throwing `clearTimeout` propagates from an explicit `clear()`', async () => {
+	// A direct call is the caller's own business, so the error surfaces there.
+	const promise = pTimeout(delay(5000), {milliseconds: 30, customTimers: throwingClearTimers});
+
+	assert.throws(() => {
+		promise.clear();
+	}, {message: '`clearTimeout` blew up'});
+
+	// The timer handle survives the throw, so the timeout still fires and nothing is left dangling.
+	await assert.rejects(promise, TimeoutError);
+});
+
 test('`.clear()` method', async () => {
 	const end = timeSpan();
 	const promise = pTimeout(delay(300), {milliseconds: 200});
