@@ -76,8 +76,11 @@ export default function pTimeout(promise, options) {
 			return;
 		}
 
-		// We create the error outside of `setTimeout` to preserve the stack trace.
-		const timeoutError = new TimeoutError();
+		// We create the error outside of `setTimeout` to preserve the stack trace, but only when the timeout can
+		// actually reject with it. Capturing a stack trace is expensive and almost every timeout resolves first,
+		// so building it unconditionally was wasted work on every single call.
+		const willRejectWithTimeoutError = !fallback && message !== false && !(message instanceof Error);
+		const timeoutError = willRejectWithTimeoutError ? new TimeoutError() : undefined;
 
 		// `.call(undefined, ...)` is needed for custom timers to avoid context issues
 		timer = customTimers.setTimeout.call(undefined, () => {
@@ -97,12 +100,17 @@ export default function pTimeout(promise, options) {
 
 			if (message === false) {
 				resolve();
-			} else if (message instanceof Error) {
-				reject(message);
-			} else {
-				timeoutError.message = message ?? `Promise timed out after ${milliseconds} milliseconds`;
-				reject(timeoutError);
+				return;
 			}
+
+			if (message instanceof Error) {
+				reject(message);
+				return;
+			}
+
+			// Only reachable when `timeoutError` was built, since the cases above are what skip it.
+			timeoutError.message = message ?? `Promise timed out after ${milliseconds} milliseconds`;
+			reject(timeoutError);
 		}, milliseconds);
 	});
 

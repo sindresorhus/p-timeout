@@ -241,6 +241,39 @@ test('a throwing `clearTimeout` propagates from an explicit `clear()`', async ()
 	await assert.rejects(promise, TimeoutError);
 });
 
+test('only builds a `TimeoutError` when the timeout can reject with one', async () => {
+	// `Error.captureStackTrace` is expensive and almost every timeout resolves first, so building the error
+	// unconditionally was pure overhead. It still has to be built before the timer fires so that its stack
+	// points at the caller.
+	/* eslint-disable unicorn/no-nonstandard-builtin-properties -- V8-only API, used by p-timeout itself */
+	const originalCaptureStackTrace = Error.captureStackTrace;
+	let captureCount = 0;
+	Error.captureStackTrace = function (...arguments_) {
+		captureCount++;
+		return originalCaptureStackTrace.apply(this, arguments_);
+	};
+	/* eslint-enable unicorn/no-nonstandard-builtin-properties */
+
+	let unused;
+	let used;
+	try {
+		// None of these can reject with a `TimeoutError`.
+		await pTimeout(Promise.resolve(fixture), {milliseconds: 100, message: false});
+		await pTimeout(Promise.resolve(fixture), {milliseconds: 100, message: new RangeError('cake')});
+		await pTimeout(Promise.resolve(fixture), {milliseconds: 100, fallback: () => fixture});
+		unused = captureCount;
+
+		await assert.rejects(pTimeout(delay(200), {milliseconds: 20}), TimeoutError);
+		await assert.rejects(pTimeout(delay(200), {milliseconds: 20, message: 'too slow'}), TimeoutError);
+		used = captureCount - unused;
+	} finally {
+		/* eslint-disable-next-line unicorn/no-nonstandard-builtin-properties -- restoring what we replaced */
+		Error.captureStackTrace = originalCaptureStackTrace;
+	}
+
+	assert.deepEqual([unused, used], [0, 2]);
+});
+
 test('`.clear()` method', async () => {
 	const end = timeSpan();
 	const promise = pTimeout(delay(300), {milliseconds: 200});
