@@ -9,7 +9,11 @@ export class TimeoutError extends Error {
 	}
 }
 
-const getAbortedReason = signal => signal.reason ?? new DOMException('This operation was aborted.', 'AbortError');
+// An `AbortSignal` always has a reason once aborted, and that reason is whatever the caller passed to
+// `abort()`, including `null`. Only hand-rolled signal objects can lack the property entirely.
+const getAbortedReason = signal => 'reason' in signal
+	? signal.reason
+	: new DOMException('This operation was aborted.', 'AbortError');
 
 // `setTimeout` stores its delay in a 32-bit signed integer, so this is the largest delay it can represent.
 const maximumDelay = (2 ** 31) - 1;

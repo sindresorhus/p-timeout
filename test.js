@@ -202,6 +202,25 @@ test('rejects when calling `AbortController#abort()`', async () => {
 	assert.ok(error instanceof DOMException);
 });
 
+const rejectionReasonFor = async reason => {
+	const controller = new AbortController();
+	controller.abort(reason);
+
+	return captureRejection(pTimeout(new Promise(() => {}), {
+		milliseconds: 100,
+		signal: controller.signal,
+	}));
+};
+
+test('rejects with the exact abort reason', async () => {
+	// `AbortController#abort(null)` sets `signal.reason` to `null`, and that is the reason callers observe. It
+	// used to be swapped for a DOMException, hiding the value the caller deliberately passed.
+	const reasons = [null, 'a string', 0, false, {code: 'fixture'}];
+	const captured = await Promise.all(reasons.map(async reason => rejectionReasonFor(reason)));
+
+	assert.deepEqual(captured, reasons);
+});
+
 test('already aborted signal', async () => {
 	const abortController = new AbortController();
 
