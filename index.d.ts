@@ -147,3 +147,5 @@ export default function pTimeout<ValueType, ReturnType = ValueType>(
 	input: PromiseLike<ValueType>,
 	options: Options<ReturnType>,
 ): ClearablePromise<ValueType | ReturnType>;
+
+export {}; // eslint-disable-line unicorn/require-module-specifiers -- It stops the implicit export of the declarations without `export`.
