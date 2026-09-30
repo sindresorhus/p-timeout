@@ -18,6 +18,21 @@ const getAbortedReason = signal => 'reason' in signal
 // `setTimeout` stores its delay in a 32-bit signed integer, so this is the largest delay it can represent.
 const maximumDelay = (2 ** 31) - 1;
 
+// Checked before the input is attached. `input` is a `PromiseLike`, so it is allowed to settle during the call
+// to `then`; attaching first would let a synchronous thenable settle the wrapper and leave a bad option
+// silently ignored.
+const getOptionsError = (milliseconds, customTimers) => {
+	if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
+		return new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
+	}
+
+	const hasBothTimerFunctions = typeof customTimers?.setTimeout === 'function' && typeof customTimers?.clearTimeout === 'function';
+
+	return hasBothTimerFunctions
+		? undefined
+		: new TypeError('Expected `customTimers` to have a `setTimeout` and a `clearTimeout` function');
+};
+
 export default function pTimeout(promise, options) {
 	const {
 		milliseconds,
@@ -42,19 +57,33 @@ export default function pTimeout(promise, options) {
 	};
 
 	const wrappedPromise = new Promise((resolve, reject) => {
-		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
-			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
-		}
+		// A `PromiseLike` may settle during the call to `then`, so anything that has to win over the input's own
+		// outcome has to be decided before the input is attached: an invalid option, or an abort the caller has
+		// already committed to. Otherwise a synchronous thenable settles the wrapper first and buries both.
+		const optionsError = getOptionsError(milliseconds, customTimers);
+		const isPreAborted = Boolean(signal?.aborted);
 
-		if (signal?.aborted) {
-			// The caller gave up before we even started, so the input has nothing worth waiting for.
-			cancelInput();
-			reject(getAbortedReason(signal));
-			// The input still needs a rejection handler even though cancellation won.
+		if (optionsError || isPreAborted) {
+			if (optionsError) {
+				reject(optionsError);
+			} else {
+				// The caller gave up before we even started, so the input has nothing worth waiting for.
+				cancelInput();
+				reject(getAbortedReason(signal));
+			}
+
+			// The input's rejection still needs a handler, or it escapes as an unhandled rejection that crashes
+			// the process and hides the error explaining the actual mistake. Attaching after the reject is what
+			// keeps the input from settling the wrapper first. It has to be the only handler on the input: an
+			// extra one ahead of it costs the input's rejection its caller frames in the stack trace.
 			// eslint-disable-next-line unicorn/prefer-then-catch
 			promise.then(resolve, reject);
 			return;
 		}
+
+		// Use .then() instead of async IIFE to preserve stack traces
+		// eslint-disable-next-line unicorn/prefer-then-catch
+		promise.then(resolve, reject);
 
 		if (signal) {
 			abortHandler = () => {
@@ -65,10 +94,6 @@ export default function pTimeout(promise, options) {
 
 			signal.addEventListener('abort', abortHandler, {once: true});
 		}
-
-		// Use .then() instead of async IIFE to preserve stack traces
-		// eslint-disable-next-line unicorn/prefer-then-catch
-		promise.then(resolve, reject);
 
 		// A delay that `setTimeout` cannot represent never elapses, so there is nothing to time out. Without
 		// this, `setTimeout` silently clamps anything above 2 ** 31 - 1 to 1ms and the timeout fires at once.

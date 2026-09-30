@@ -274,6 +274,23 @@ test('only builds a `TimeoutError` when the timeout can reject with one', async 
 	assert.deepEqual([unused, used], [0, 2]);
 });
 
+test('throws when `customTimers` is missing a function', async () => {
+	// A half-configured `customTimers` used to fail much later with a cryptic
+	// "Cannot read properties of undefined (reading 'call')".
+	const incomplete = [{setTimeout}, {clearTimeout}, {}];
+	const errors = await Promise.all(incomplete.map(async customTimers => captureRejection(
+		pTimeout(delay(50), {milliseconds: 100, customTimers}),
+	)));
+
+	const [first] = errors;
+	assert.deepEqual(errors, [first, first, first], 'every incomplete `customTimers` should fail the same way');
+	assert.ok(first instanceof TypeError);
+	assert.strictEqual(
+		first.message,
+		'Expected `customTimers` to have a `setTimeout` and a `clearTimeout` function',
+	);
+});
+
 test('`.clear()` method', async () => {
 	const end = timeSpan();
 	const promise = pTimeout(delay(300), {milliseconds: 200});
@@ -532,4 +549,110 @@ test('an infinite timeout settles even with custom timers', async () => {
 
 	const rejected = pTimeout(Promise.reject(new Error('inner')), {milliseconds: Infinity, customTimers});
 	await assert.rejects(rejected, {message: 'inner'});
+});
+
+test('invalid options still observe the input rejection', async () => {
+	// An invalid option rejects the wrapped promise, but the caller's input still needs a rejection handler.
+	// Without one, the input's failure escapes as an unhandled rejection and takes the whole process down,
+	// hiding the \`TypeError\` that actually explains the mistake.
+	const {stdout} = await promisify(execFile)(process.execPath, [
+		'--unhandled-rejections=strict',
+		'--input-type=module',
+		'--eval',
+		`
+			import assert from 'node:assert/strict';
+			import pTimeout from ${JSON.stringify(new URL('index.js', import.meta.url).href)};
+
+			const invalidOptions = [
+				{milliseconds: 'x'},
+				{milliseconds: -1},
+				{milliseconds: 100, customTimers: {setTimeout}},
+				{milliseconds: 100, customTimers: {}},
+			];
+
+			for (const options of invalidOptions) {
+				await assert.rejects(pTimeout(Promise.reject(new Error('input failed')), options), TypeError);
+			}
+
+			await new Promise(resolve => setTimeout(resolve, 50));
+			console.log('handled');
+		`,
+	]);
+
+	assert.strictEqual(stdout.trim(), 'handled');
+});
+
+// A synchronous thenable, which the declared `PromiseLike` input type allows. It settles during the call to
+// `then`, so anything that relies on the input settling in a microtask is bypassed.
+const createSyncThenable = settle => ({
+	// eslint-disable-next-line unicorn/no-thenable -- being a thenable is the entire point
+	then(onFulfilled, onRejected) {
+		settle(onFulfilled, onRejected);
+	},
+});
+
+test('invalid options are still rejected for a synchronous thenable', async () => {
+	// The option checks have to run before the input is allowed to settle the wrapper. Otherwise a typo in
+	// `milliseconds` resolves with the input value and no timeout is ever armed.
+	const invalidOptions = [
+		{milliseconds: 'nope'},
+		{milliseconds: 0},
+		{milliseconds: NaN},
+		{milliseconds: 50, customTimers: {}},
+		{milliseconds: 50, customTimers: {setTimeout}},
+	];
+
+	const errors = await Promise.all(invalidOptions.map(async options => captureRejection(
+		pTimeout(createSyncThenable(resolve => resolve(fixture)), options),
+	)));
+
+	assert.ok(
+		errors.every(error => error instanceof TypeError),
+		`expected every invalid option to reject with a TypeError, got: ${errors.map(error => error?.constructor.name).join(', ')}`,
+	);
+});
+
+test('an already aborted signal still rejects for a synchronous thenable', async () => {
+	// The input settling first must not win over an abort the caller has already committed to.
+	const controller = new AbortController();
+	controller.abort(new Error('cancelled by caller'));
+
+	const error = await captureRejection(pTimeout(createSyncThenable(resolve => resolve(fixture)), {
+		milliseconds: 5000,
+		signal: controller.signal,
+	}));
+
+	assert.strictEqual(error?.message, 'cancelled by caller');
+});
+
+test('attaches exactly one handler to the input', async () => {
+	// A second handler on the input costs its rejection the caller frames in the stack trace, so the count
+	// matters even though an extra attach looks completely harmless.
+	const countAttaches = () => {
+		const state = {count: 0};
+		const inner = delay(5, {value: fixture});
+		state.input = {
+			// eslint-disable-next-line unicorn/no-thenable -- a counting thenable is the point
+			then(onFulfilled, onRejected) {
+				state.count++;
+				// eslint-disable-next-line unicorn/prefer-then-catch -- must forward both outcomes verbatim
+				return inner.then(onFulfilled, onRejected);
+			},
+		};
+		return state;
+	};
+
+	const normal = countAttaches();
+	assert.strictEqual(await pTimeout(normal.input, {milliseconds: 500}), fixture);
+	assert.strictEqual(normal.count, 1);
+
+	const controller = new AbortController();
+	controller.abort();
+	const preAborted = countAttaches();
+	await assert.rejects(pTimeout(preAborted.input, {milliseconds: 500, signal: controller.signal}), {name: 'AbortError'});
+	assert.strictEqual(preAborted.count, 1, 'the pre-aborted path observes the input exactly once too');
+
+	const invalid = countAttaches();
+	await assert.rejects(pTimeout(invalid.input, {milliseconds: 'nope'}), TypeError);
+	assert.strictEqual(invalid.count, 1, 'the invalid-options path observes the input exactly once too');
 });
