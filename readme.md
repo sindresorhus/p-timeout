@@ -31,7 +31,7 @@ await pTimeout(delayedPromise, {
 
 Returns a decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
 
-If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out.
+If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out, and when its `signal` aborts. Cancellation is best-effort: if `.cancel()` throws, the error is ignored and the promise still settles as usual.
 
 #### input
 

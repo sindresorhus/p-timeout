@@ -136,6 +136,24 @@ test('calls `.cancel()` on promise when it exists', async () => {
 	assert.ok(promise.isCanceled);
 });
 
+// A never-settling promise with a `.cancel()` method. `p-cancelable` cannot be used to test a throwing
+// `.cancel()`, since it catches handler errors and rejects itself rather than letting them escape.
+const createCancelable = cancel => {
+	const promise = new Promise(() => {});
+	promise.cancel = cancel;
+	return promise;
+};
+
+test('a throwing `.cancel()` still times out', async () => {
+	// A `.cancel()` that throws used to escape the timer callback as an uncaught exception, which crashed the
+	// process and left the promise pending forever.
+	const promise = createCancelable(() => {
+		throw new Error('`.cancel()` blew up');
+	});
+
+	await assert.rejects(pTimeout(promise, {milliseconds: 20}), TimeoutError);
+});
+
 test('accepts `customTimers` option', async () => {
 	const requestedDelays = [];
 	let didClear = false;
@@ -175,6 +193,20 @@ test('`.clear()` method can be called multiple times', async () => {
 	promise.clear(); // Should not throw
 
 	assert.strictEqual(await promise, fixture);
+});
+
+test('calls `.cancel()` on the input when a fallback is used', async () => {
+	// A fallback still means the input timed out, and the readme promises `.cancel()` is called then, but the
+	// fallback branch returned before reaching it, so the input kept running.
+	let didCancel = false;
+	const promise = createCancelable(() => {
+		didCancel = true;
+	});
+
+	const result = await pTimeout(promise, {milliseconds: 20, fallback: () => 'fallback result'});
+
+	assert.strictEqual(result, 'fallback result');
+	assert.ok(didCancel, '`.cancel()` should have been called on the input');
 });
 
 test('fallback resolves successfully', async () => {
@@ -249,6 +281,55 @@ test('aborts even if milliseconds are set to infinity', async () => {
 	const error = await captureRejection(promise);
 	assert.strictEqual(error?.name, 'AbortError');
 	assert.ok(error instanceof DOMException);
+});
+
+// Tracks whether a cancelable input was cancelled. The tracker is returned as an object so that `didCancel` is
+// read after the fact rather than snapshotted at destructuring time.
+const createCancelableTracker = () => {
+	const tracker = {didCancel: false};
+	tracker.promise = createCancelable(() => {
+		tracker.didCancel = true;
+	});
+	return tracker;
+};
+
+test('calls `.cancel()` on the input when the signal aborts', async () => {
+	// A timeout cancels the input, so an abort must too. Otherwise the work keeps running after the caller has
+	// said it no longer wants the result.
+	const tracker = createCancelableTracker();
+
+	const controller = new AbortController();
+	const wrapped = pTimeout(tracker.promise, {milliseconds: 5000, signal: controller.signal});
+	controller.abort();
+
+	await assert.rejects(wrapped, {name: 'AbortError'});
+	assert.ok(tracker.didCancel, '`.cancel()` should have been called on the input');
+});
+
+test('calls `.cancel()` on the input for an already aborted signal', async () => {
+	const tracker = createCancelableTracker();
+
+	const controller = new AbortController();
+	controller.abort();
+
+	await assert.rejects(
+		pTimeout(tracker.promise, {milliseconds: 5000, signal: controller.signal}),
+		{name: 'AbortError'},
+	);
+	assert.ok(tracker.didCancel, '`.cancel()` should have been called on the input');
+});
+
+test('a throwing `.cancel()` still rejects with the abort reason', async () => {
+	const promise = createCancelable(() => {
+		throw new Error('`.cancel()` blew up');
+	});
+
+	const controller = new AbortController();
+	const wrapped = pTimeout(promise, {milliseconds: 5000, signal: controller.signal});
+	controller.abort(new Error('cancelled by caller'));
+
+	const error = await captureRejection(wrapped);
+	assert.strictEqual(error?.message, 'cancelled by caller');
 });
 
 const testAbortListenerCleanup = async promiseFactory => {

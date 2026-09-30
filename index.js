@@ -30,12 +30,25 @@ export default function pTimeout(promise, options) {
 	let timer;
 	let abortHandler;
 
+	// Best-effort cancellation of the input. A throwing `.cancel()` must never prevent us from settling, and
+	// must never escape the timer callback as an uncaught exception. Anything that is not callable is simply
+	// skipped, so the `try` covers that case too.
+	const cancelInput = () => {
+		try {
+			promise.cancel?.();
+		} catch {
+			// Ignored: the timeout outcome matters more than a failure to stop the work early.
+		}
+	};
+
 	const wrappedPromise = new Promise((resolve, reject) => {
 		if (typeof milliseconds !== 'number' || Math.sign(milliseconds) !== 1) {
 			throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
 		}
 
 		if (signal?.aborted) {
+			// The caller gave up before we even started, so the input has nothing worth waiting for.
+			cancelInput();
 			reject(getAbortedReason(signal));
 			// The input still needs a rejection handler even though cancellation won.
 			// eslint-disable-next-line unicorn/prefer-then-catch
@@ -45,6 +58,8 @@ export default function pTimeout(promise, options) {
 
 		if (signal) {
 			abortHandler = () => {
+				// Same as a timeout: the caller no longer wants the result, so stop the underlying work.
+				cancelInput();
 				reject(getAbortedReason(signal));
 			};
 
@@ -66,6 +81,10 @@ export default function pTimeout(promise, options) {
 
 		// `.call(undefined, ...)` is needed for custom timers to avoid context issues
 		timer = customTimers.setTimeout.call(undefined, () => {
+			// The input has timed out either way, so the underlying work is stopped even when a fallback takes
+			// over. The readme promises `.cancel()` runs on timeout.
+			cancelInput();
+
 			if (fallback) {
 				try {
 					resolve(fallback());
@@ -74,10 +93,6 @@ export default function pTimeout(promise, options) {
 				}
 
 				return;
-			}
-
-			if (typeof promise.cancel === 'function') {
-				promise.cancel();
 			}
 
 			if (message === false) {
