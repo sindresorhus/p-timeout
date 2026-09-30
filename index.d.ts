@@ -14,7 +14,7 @@ export type Options<ReturnType> = {
 	/**
 	Milliseconds before timing out.
 
-	Passing `Infinity` will cause it to never time out.
+	Passing `Infinity`, or any value above the maximum delay a timer can represent (`2 ** 31 - 1`), will cause it to never time out.
 	*/
 	milliseconds: number;
 

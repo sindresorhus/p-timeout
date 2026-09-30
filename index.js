@@ -11,6 +11,9 @@ export class TimeoutError extends Error {
 
 const getAbortedReason = signal => signal.reason ?? new DOMException('This operation was aborted.', 'AbortError');
 
+// `setTimeout` stores its delay in a 32-bit signed integer, so this is the largest delay it can represent.
+const maximumDelay = (2 ** 31) - 1;
+
 export default function pTimeout(promise, options) {
 	const {
 		milliseconds,
@@ -48,7 +51,9 @@ export default function pTimeout(promise, options) {
 		// eslint-disable-next-line unicorn/prefer-then-catch
 		promise.then(resolve, reject);
 
-		if (milliseconds === Infinity) {
+		// A delay that `setTimeout` cannot represent never elapses, so there is nothing to time out. Without
+		// this, `setTimeout` silently clamps anything above 2 ** 31 - 1 to 1ms and the timeout fires at once.
+		if (milliseconds > maximumDelay) {
 			return;
 		}
 
@@ -90,7 +95,7 @@ export default function pTimeout(promise, options) {
 	});
 
 	cancelablePromise.clear = () => {
-		// An infinite timeout never creates one, and a custom `clearTimeout` is entitled to reject `undefined`.
+		// A timeout that never elapses creates no timer, and a custom `clearTimeout` is entitled to reject `undefined`.
 		if (timer === undefined) {
 			return;
 		}

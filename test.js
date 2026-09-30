@@ -23,6 +23,21 @@ const captureRejection = async promise => {
 	return undefined;
 };
 
+const settleOutcome = async promise => {
+	try {
+		await promise;
+		return 'resolved';
+	} catch {
+		return 'rejected';
+	}
+};
+
+// Reports how a promise settled, or that it was still pending after `milliseconds`.
+const settleWithin = (promise, milliseconds) => Promise.race([
+	settleOutcome(promise),
+	delay(milliseconds, {value: 'still pending'}),
+]);
+
 test('resolves before timeout', async () => {
 	assert.strictEqual(await pTimeout(delay(50, {value: fixture}), {milliseconds: 200}), fixture);
 });
@@ -44,6 +59,33 @@ test('handles milliseconds being `Infinity`', async () => {
 		await pTimeout(delay(50, {value: fixture}), {milliseconds: Infinity}),
 		fixture,
 	);
+});
+
+test('milliseconds beyond the maximum timer delay never times out', async () => {
+	// `setTimeout` cannot represent a delay above 2 ** 31 - 1. It silently clamps to 1ms, so a request for
+	// `2 ** 31` milliseconds used to time out immediately.
+	const outcomes = await Promise.all([2 ** 31, 2 ** 40, 1e12].map(async milliseconds => settleWithin(
+		pTimeout(new Promise(() => {}), {milliseconds}),
+		100,
+	)));
+
+	assert.deepEqual(outcomes, ['still pending', 'still pending', 'still pending']);
+});
+
+test('does not emit a timeout overflow warning', async () => {
+	const warnings = [];
+	const onWarning = warning => {
+		warnings.push(warning);
+	};
+
+	process.on('warning', onWarning);
+	try {
+		await settleWithin(pTimeout(new Promise(() => {}), {milliseconds: 2 ** 31}), 100);
+	} finally {
+		process.removeListener('warning', onWarning);
+	}
+
+	assert.deepEqual(warnings, []);
 });
 
 test('rejects after timeout', async () => {
