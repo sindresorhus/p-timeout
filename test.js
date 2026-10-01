@@ -906,3 +906,29 @@ test('attaches exactly one handler to the input', async () => {
 	await assert.rejects(pTimeout(invalid.input, {milliseconds: 'nope'}), TypeError);
 	assert.strictEqual(invalid.count, 1, 'the invalid-options path observes the input exactly once too');
 });
+
+test('a `.cancel()` that settles the input synchronously cannot change the outcome', async () => {
+	// `.cancel()` is free to settle the input on the spot, through the very handlers p-timeout passed to `then`, so the outcome has to be decided before the input is cancelled.
+	const createInput = () => {
+		let rejectInput;
+		return {
+			// eslint-disable-next-line unicorn/no-thenable -- being a thenable is the entire point
+			then(onFulfilled, onRejected) {
+				rejectInput = onRejected;
+			},
+			cancel() {
+				rejectInput?.(new Error('cancelled'));
+			},
+		};
+	};
+
+	await assert.rejects(pTimeout(createInput(), {milliseconds: 20}), TimeoutError);
+	assert.strictEqual(await pTimeout(createInput(), {milliseconds: 20, fallback: () => fixture}), fixture);
+	assert.strictEqual(await pTimeout(createInput(), {milliseconds: 20, message: false}), undefined);
+
+	const reason = new Error('aborted by caller');
+	const controller = new AbortController();
+	const aborted = pTimeout(createInput(), {milliseconds: 5000, signal: controller.signal});
+	controller.abort(reason);
+	assert.strictEqual(await captureRejection(aborted), reason);
+});
