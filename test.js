@@ -498,6 +498,41 @@ test('rejects with the abort reason when the signal aborts during the call to `t
 	assert.strictEqual(error, reason);
 });
 
+test('an abort wins over a subsequent synchronous input resolution', async t => {
+	const cancel = t.mock.fn();
+	const controller = new AbortController();
+	const reason = new Error('cancelled before resolving');
+	const input = createSyncThenable(resolve => {
+		controller.abort(reason);
+		resolve(fixture);
+	});
+	input.cancel = cancel;
+
+	await assert.rejects(pTimeout(input, {milliseconds: 20, signal: controller.signal}), error => error === reason);
+	assert.strictEqual(cancel.mock.callCount(), 1);
+});
+
+test('an abort wins over a subsequent synchronous input rejection', async () => {
+	const controller = new AbortController();
+	const reason = new Error('cancelled before rejecting');
+	const input = createSyncThenable((resolve, reject) => {
+		controller.abort(reason);
+		reject(fixtureError);
+	});
+
+	await assert.rejects(pTimeout(input, {milliseconds: 20, signal: controller.signal}), error => error === reason);
+});
+
+test('a synchronous input resolution wins over a subsequent abort', async () => {
+	const controller = new AbortController();
+	const input = createSyncThenable(resolve => {
+		resolve(fixture);
+		controller.abort();
+	});
+
+	assert.strictEqual(await pTimeout(input, {milliseconds: 20, signal: controller.signal}), fixture);
+});
+
 test('removes abort listener after promise settles', async () => {
 	const [wasAdded, wasRemoved] = await testAbortListenerCleanup(() => delay(50));
 	assert.ok(wasAdded, 'addEventListener should be called with "abort"');

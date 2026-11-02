@@ -57,35 +57,25 @@ export default function pTimeout(promise, options) {
 
 		// `input` is a `PromiseLike`, so it may settle during the call to `then`. Anything that has to win over its outcome, an invalid option or an abort the caller already committed to, is therefore decided before it is attached. Otherwise a synchronous thenable settles the wrapper first and buries both.
 		const optionsError = getOptionsError(milliseconds, customTimers);
-		const isAborted = !optionsError && signal?.aborted;
 
-		if (optionsError) {
-			reject(optionsError);
-		} else if (isAborted) {
-			abort();
-		}
-
-		// Use .then() instead of async IIFE to preserve stack traces. This also observes the input when it has already lost, so its rejection cannot escape as an unhandled rejection that crashes the process and hides the real error. It has to be the only handler on the input, as an extra one costs the input's rejection its caller frames in the stack trace.
-		// eslint-disable-next-line unicorn/prefer-then-catch
-		promise.then(resolve, reject);
-
-		if (optionsError || isAborted) {
-			return;
-		}
-
-		// A synchronous thenable can abort the signal during the call to `then`, and an `AbortSignal` does not replay the event to a listener added later. The listener is still attached after `then`, so a signal that cannot take one never stops the input from being observed.
-		if (signal?.aborted) {
-			abort();
-			return;
-		}
-
-		if (signal) {
-			abortHandler = abort;
-			signal.addEventListener('abort', abortHandler, {once: true});
+		try {
+			if (optionsError) {
+				reject(optionsError);
+			} else if (signal?.aborted) {
+				abort();
+			} else if (signal) {
+				// A synchronous thenable can abort the signal and settle during the call to `then`, so attach the listener first to preserve their order. An `AbortSignal` does not replay the event to a listener added later.
+				abortHandler = abort;
+				signal.addEventListener('abort', abortHandler, {once: true});
+			}
+		} finally {
+			// Use .then() instead of async IIFE to preserve stack traces. This also observes the input when it has already lost or the signal cannot take a listener, so its rejection cannot escape as an unhandled rejection that crashes the process and hides the real error. It has to be the only handler on the input, as an extra one costs the input's rejection its caller frames in the stack trace.
+			// eslint-disable-next-line unicorn/prefer-then-catch
+			promise.then(resolve, reject);
 		}
 
 		// A delay that `setTimeout` cannot represent never elapses, so there is nothing to time out. Without this, `setTimeout` silently clamps anything above 2 ** 31 - 1 to 1ms and the timeout fires at once.
-		if (milliseconds > maximumDelay) {
+		if (optionsError || signal?.aborted || milliseconds > maximumDelay) {
 			return;
 		}
 
