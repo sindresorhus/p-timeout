@@ -1,5 +1,5 @@
 export class TimeoutError extends Error {
-	readonly name: 'TimeoutError';
+	readonly name: string;
 	constructor(message?: string, options?: ErrorOptions);
 }
 
@@ -42,7 +42,7 @@ export type Options<ReturnType> = {
 	});
 	```
 	*/
-	fallback?: () => ReturnType | Promise<ReturnType>;
+	fallback?: () => ReturnType | PromiseLike<ReturnType>;
 
 	/**
 	Specify a custom error message or error to throw when it times out:

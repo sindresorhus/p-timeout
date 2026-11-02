@@ -55,5 +55,17 @@ expectError(pTimeout(delayedPromise(), {
 
 expectError(pTimeout(delayedPromise(), {})); // `milliseconds` is required
 
+declare const promiseLike: PromiseLike<number>;
+pTimeout(delayedPromise(), {milliseconds: 50, fallback: () => promiseLike}).then(value => {
+	expectTypeOf(value).toBe<string | number>();
+});
+
 const timeoutError = new TimeoutError();
 expectTypeOf(timeoutError).toBe<TimeoutError>();
+
+// The subclass example from the readme.
+class MyCustomError extends TimeoutError {
+	name = 'MyCustomError';
+}
+
+expectTypeOf(new MyCustomError()).toBe<MyCustomError>();
