@@ -23,6 +23,10 @@ pTimeout(delayedPromise(), {milliseconds: 50, message: false}).then(value => {
 pTimeout(delayedPromise(), {milliseconds: 50, message: false, fallback: () => 10}).then(value => {
 	expectTypeOf(value).toBe<string | number | undefined>();
 });
+declare const messageOrFalse: string | false;
+pTimeout(delayedPromise(), {milliseconds: 50, message: messageOrFalse}).then(value => {
+	expectTypeOf(value).toBe<string | undefined>();
+});
 pTimeout(delayedPromise(), {milliseconds: 50, message: new Error('error')}).then(value => {
 	expectTypeOf(value).toBe<string>();
 });

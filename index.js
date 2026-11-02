@@ -73,6 +73,12 @@ export default function pTimeout(promise, options) {
 			return;
 		}
 
+		// A synchronous thenable can abort the signal during the call to `then`, and an `AbortSignal` does not replay the event to a listener added later. The listener is still attached after `then`, so a signal that cannot take one never stops the input from being observed.
+		if (signal?.aborted) {
+			abort();
+			return;
+		}
+
 		if (signal) {
 			abortHandler = abort;
 			signal.addEventListener('abort', abortHandler, {once: true});

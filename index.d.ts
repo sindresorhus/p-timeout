@@ -21,6 +21,8 @@ export type Options<ReturnType> = {
 	/**
 	Do something other than rejecting with an error on timeout.
 
+	It takes precedence over `message`, including `message: false`.
+
 	You could for example retry:
 
 	@example
@@ -119,7 +121,7 @@ export type Options<ReturnType> = {
 /**
 Timeout a promise after a specified amount of time.
 
-If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out, and when its `signal` aborts. Cancellation is best-effort: if `.cancel()` throws, the error is ignored and the promise still settles as usual.
+If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out, and when its `signal` aborts. Cancellation is best-effort: if `.cancel()` throws, the error is ignored and the promise still settles as usual. A promise returned by `.cancel()` is not awaited, so handle its rejection yourself.
 
 @param input - Promise to decorate.
 @returns A decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
@@ -141,11 +143,11 @@ await pTimeout(delayedPromise(), {
 */
 export default function pTimeout<ValueType, ReturnType = ValueType>(
 	input: PromiseLike<ValueType>,
-	options: Options<ReturnType> & {message: false},
-): ClearablePromise<ValueType | ReturnType | undefined>;
+	options: Options<ReturnType> & {message?: string | Error},
+): ClearablePromise<ValueType | ReturnType>;
 export default function pTimeout<ValueType, ReturnType = ValueType>(
 	input: PromiseLike<ValueType>,
 	options: Options<ReturnType>,
-): ClearablePromise<ValueType | ReturnType>;
+): ClearablePromise<ValueType | ReturnType | undefined>;
 
 export {}; // eslint-disable-line unicorn/require-module-specifiers -- It stops the implicit export of the declarations without `export`.

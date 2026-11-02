@@ -486,6 +486,18 @@ test('calls `.cancel()` on the input for an already aborted signal', async t => 
 	assert.strictEqual(cancel.mock.callCount(), 1, '`.cancel()` should have been called on the input');
 });
 
+test('rejects with the abort reason when the signal aborts during the call to `then`', async () => {
+	// A synchronous thenable can abort the signal before the listener was attached. The abort event then never reached us, and the timeout won instead.
+	const controller = new AbortController();
+	const reason = new Error('cancelled during then');
+	const input = createSyncThenable(() => {
+		controller.abort(reason);
+	});
+
+	const error = await captureRejection(pTimeout(input, {milliseconds: 20, signal: controller.signal}));
+	assert.strictEqual(error, reason);
+});
+
 test('removes abort listener after promise settles', async () => {
 	const [wasAdded, wasRemoved] = await testAbortListenerCleanup(() => delay(50));
 	assert.ok(wasAdded, 'addEventListener should be called with "abort"');
@@ -522,6 +534,19 @@ test('already aborted signal observes input rejections', async () => {
 				signal,
 			}), error => error === reason);
 		}
+	`), 'handled');
+});
+
+test('an invalid signal still observes input rejections', async () => {
+	// Passing the `AbortController` instead of its `signal` is a common mistake. The call fails with a `TypeError`, but the input must still be observed, or its later rejection crashes the process.
+	assert.strictEqual(await runWithStrictUnhandledRejections(`
+		const input = new Promise((resolve, reject) => {
+			setTimeout(() => reject(new Error('input failed')), 10);
+		});
+		await assert.rejects(pTimeout(input, {
+			milliseconds: 100,
+			signal: new AbortController(),
+		}), TypeError);
 	`), 'handled');
 });
 

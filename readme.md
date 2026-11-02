@@ -31,7 +31,7 @@ await pTimeout(delayedPromise, {
 
 Returns a decorated `input` that times out after `milliseconds` time. It has a `.clear()` method that clears the timeout.
 
-If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out, and when its `signal` aborts. Cancellation is best-effort: if `.cancel()` throws, the error is ignored and the promise still settles as usual.
+If you pass in a cancelable promise, specifically a promise with a `.cancel()` method, that method will be called when the `pTimeout` promise times out, and when its `signal` aborts. Cancellation is best-effort: if `.cancel()` throws, the error is ignored and the promise still settles as usual. A promise returned by `.cancel()` is not awaited, so handle its rejection yourself.
 
 #### input
 
@@ -77,6 +77,8 @@ class MyCustomError extends TimeoutError {
 Type: `Function`
 
 Do something other than rejecting with an error on timeout.
+
+It takes precedence over `message`, including `message: false`.
 
 The function can return a value or a promise.
 
